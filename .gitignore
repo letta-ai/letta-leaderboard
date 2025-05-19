@@ -1,0 +1,8 @@
+__pycache__/
+
+*result.json
+results/
+
+*.png
+
+results*

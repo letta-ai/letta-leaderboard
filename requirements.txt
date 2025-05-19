@@ -1,0 +1,4 @@
+letta
+rich
+letta_client
+datasets
