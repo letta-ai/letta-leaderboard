@@ -156,7 +156,6 @@ class Dotdict(dict):
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{key}'"
             ) from e
-        
 
 
 import openai
@@ -271,10 +270,7 @@ def request_openai(
     system_message: str = "You are a helpful assistant.",
 ) -> str:
     api_key = os.getenv("OPENAI_API_KEY_NOT_PROXY")
-    client = openai.OpenAI(
-        api_key=api_key,
-        base_url="https://api.openai.com/v1"
-    )
+    client = openai.OpenAI(api_key=api_key, base_url="https://api.openai.com/v1")
 
     if not api_key:
         raise ValueError(
@@ -307,7 +303,6 @@ def request_openai(
         except Exception as e:
             print("Unexpected error", e)
             return ""
-
 
 
 if __name__ == "__main__":

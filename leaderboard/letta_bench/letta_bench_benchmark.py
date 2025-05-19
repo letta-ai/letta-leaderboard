@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import List
 from letta_client import (
     CreateBlock,
@@ -70,7 +69,9 @@ class NeuralDatabaseBenchmark(Benchmark):
                     trick_question_idx = i
                     while True:
                         trick_question_idx += 1
-                        trick_questions = raw_datasets[trick_question_idx % len(raw_datasets)]["question"][:3]
+                        trick_questions = raw_datasets[
+                            trick_question_idx % len(raw_datasets)
+                        ]["question"][:3]
                         if len(trick_questions):
                             break
                     message_list = trick_questions

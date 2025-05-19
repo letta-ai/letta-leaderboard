@@ -1,11 +1,10 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
-from dataclasses import dataclass
 import datetime
 import importlib
 import json
 import os
-from typing import Callable, Generator, Union
+from typing import Callable
 from tqdm import tqdm
 from letta_client import LettaResponse, MessageCreate
 from leaderboard.agent import create_base_agent
@@ -18,7 +17,6 @@ from leaderboard.utils import (
     EvaluationResult,
     add_to_json,
     write_result,
-    write_result_to_json,
 )
 
 
@@ -161,12 +159,12 @@ def evaluate_multithread(
             all_messages,
         )
 
-    results = []
-    NUM_RETRIES=5
+    NUM_RETRIES = 5
     print("Starting at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     with ThreadPoolExecutor(max_workers=num_thread) as executor:
         future_to_datum = {
-            executor.submit(process_datum_with_retry, datum, NUM_RETRIES): datum for datum in benchmark.dataset
+            executor.submit(process_datum_with_retry, datum, NUM_RETRIES): datum
+            for datum in benchmark.dataset
         }
 
         total_success = 0
