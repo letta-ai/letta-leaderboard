@@ -88,14 +88,6 @@ def total_archival_usage(
                 agent_archival_ids.append(agent_id)
                 break
 
-    print(
-        f"[cyan]Total Archival Memory Usage: {total_archival_memory}/{len(agent_ids)}[/cyan]"
-    )
-    print(
-        f"[cyan]Total Archival Memory Score: {total_archival_score}/{total_archival_memory}[/cyan]"
-    )
-    print(f"[cyan]Agent ids with archival memory usage: {agent_archival_ids}[/cyan]")
-
     return {
         "total_archival_count": total_archival_memory,
         "total_archival_score": total_archival_score,
@@ -305,6 +297,85 @@ def request_openai(
             return ""
 
 
+def collect_stat(result_dir: str, model: str, apply_penalty: bool):
+    scores = []
+    total_input_tokens = 0
+    total_output_tokens = 0
+    i = 0
+
+    while i < 100:
+        i += 1
+        json_path = os.path.join(result_dir, f"{model}_{i}.json")
+        if not os.path.isfile(json_path):
+            break
+
+        with open(json_path, "r") as f:
+            data = json.load(f)
+
+        total_input_tokens += data["input_tokens"]
+        total_output_tokens += data["output_tokens"]
+
+        if apply_penalty:
+            individual_scores = data["individual_scores"]
+            agent_ids = data["agent_ids"]
+            total_score = 0
+
+            for individual_score, agent_id in zip(individual_scores, agent_ids):
+                if individual_score == 0:
+                    continue
+
+                agent_path = os.path.join(
+                    result_dir, f"{model}_{i}", f"{agent_id}.json"
+                )
+                if not os.path.isfile(agent_path):
+                    continue
+
+                with open(agent_path, "r") as agent_f:
+                    agent_messages = json.load(agent_f)
+
+                this_score = 1
+
+                if "core_memory" in result_dir:
+                    for message in agent_messages.get("output", []):
+                        if message.get("message_type") == "tool_call_message":
+                            this_score = 0
+                            break
+
+                if "archival" in result_dir:
+                    any_archival_search = False
+                    for message in agent_messages.get("output", []):
+                        if message.get("message_type") == "tool_call_message":
+                            tool = message.get("tool_call", {}).get("name")
+                            if tool not in [
+                                "archival_memory_search",
+                                "conversation_search",
+                            ]:
+                                this_score = 0
+                            if tool == "archival_memory_search":
+                                any_archival_search = True
+                    if not any_archival_search:
+                        this_score = 0
+
+                total_score += this_score
+
+            scores.append(total_score)
+        else:
+            scores.append(data["score"])
+
+    mean_score = sum(scores) / len(scores) if scores else 0
+    min_score = min(scores) if scores else 0
+    max_score = max(scores) if scores else 0
+
+    return (
+        model,
+        mean_score,
+        min_score,
+        max_score,
+        total_input_tokens,
+        total_output_tokens,
+    )
+
+
 if __name__ == "__main__":
     arg = argparse.ArgumentParser()
 
@@ -313,6 +384,10 @@ if __name__ == "__main__":
     arg.add_argument("--delete_all_agents", action="store_true")
 
     arg.add_argument("--search_agent_name_by_id", type=str)
+
+    arg.add_argument("--get_results_for_model", type=str)
+    arg.add_argument("--result_dir", type=str)
+    arg.add_argument("--benchmark_name", type=str)
 
     args = arg.parse_args()
 
@@ -328,3 +403,16 @@ if __name__ == "__main__":
         client = Letta(base_url=f"http://localhost:8283")
         agent_state = client.agents.retrieve(agent_id)
         print(agent_state.name)
+
+    if args.get_results_for_model:
+        model = args.get_results_for_model
+        result_dir = args.result_dir
+        (
+            model,
+            mean_score,
+            min_score,
+            max_score,
+            total_input_tokens,
+            total_output_tokens,
+        ) = collect_stat(result_dir, model, True)
+        print(f"{model},{round(mean_score, 2)},{total_input_tokens},{total_output_tokens}")

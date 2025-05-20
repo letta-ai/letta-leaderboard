@@ -11,9 +11,24 @@ To run all the official `letta-leaderboard` benchmarks, run the following comman
 ```bash
 bash run_all_benchmark.sh {your_model}
 ```
+And you will get results like:
+
+```
+- model:{your_model}
+  average: 10.00
+  total_input_tokens: 10397
+  total_output_tokens: 315
+  archival_memory_read_benchmark: 11.0
+  core_memory_append_benchmark: 12.0
+  core_memory_read_benchmark: 7.0
+```
+
 
 ### Upload the result
-TODO
+
+Now, calculate how much $ you spent based on the price of your model provider and `total_input_tokens + total_output_tokens`. Add this field as "total_cost" and create a PR to paste the result into `data/letta_bench_data.yaml`
+
+
 
 
 ## Contributing new tasks

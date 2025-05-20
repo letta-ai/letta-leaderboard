@@ -24,7 +24,7 @@ def extract_last_message(response: LettaResponse) -> str:
     for message in response.messages[::-1]:
         if message.message_type == "assistant_message":
             return message.content
-    print(f"[red]No message found in response {response}[/red]")
+    # print(f"[red]No message found in response {response}[/red]")
     return ""
 
 
@@ -89,7 +89,7 @@ def run_single_data(datum, create_agent_fun, client, benchmark):
             predicted_answer, datum.answer, datum.message, agent_id
         )
         # print the score in red
-        print("[red]Score: " + str(score) + "[/red]")
+        # print("[red]Score: " + str(score) + "[/red]")
         return (
             agent_id,
             score,
@@ -148,7 +148,7 @@ def evaluate_multithread(
         predicted_answer = extract_last_message(response)
         score = benchmark.metric(predicted_answer, datum.answer, datum, agent_id)
         # print the score in red
-        print("[red]Score: " + str(score) + "[/red]")
+        # print("[red]Score: " + str(score) + "[/red]")
         return (
             agent_id,
             score,
@@ -160,7 +160,6 @@ def evaluate_multithread(
         )
 
     NUM_RETRIES = 5
-    print("Starting at: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     with ThreadPoolExecutor(max_workers=num_thread) as executor:
         future_to_datum = {
             executor.submit(process_datum_with_retry, datum, NUM_RETRIES): datum
@@ -201,8 +200,6 @@ def evaluate_multithread(
             progress_bar.set_description(f"Score: {total_score}/{total}")
             progress_bar.update(1)
             progress_bar.refresh()
-
-    print(f"Total Success: {total_success}/{total}")
 
     progress_bar.close()
     return EvaluationResult(
@@ -348,8 +345,7 @@ if __name__ == "__main__":
     benchmark.truncate_dataset(args.dataset_size)
 
     for i in range(args.repeat_from, args.repeat):
-        print(f"[green]Running evaluation {i + 1}/{args.repeat}[/green]")
-        print("time out is " + str(args.timeout) + " seconds")
+        print(f"[green]Running evaluation {i + 1}/{args.repeat} for {args.benchmark_variable} [/green]")
         result = evaluate_multithread(
             benchmark,
             client,

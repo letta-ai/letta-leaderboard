@@ -26,7 +26,7 @@ obvious_facts = [
 ]
 
 
-class NeuralDatabaseBenchmark(Benchmark):
+class LettaBenchmark(Benchmark):
     def __init__(
         self,
         test_archival_memory=False,
@@ -139,38 +139,38 @@ class NeuralDatabaseBenchmark(Benchmark):
 
         result = grade_sample(datum.message, true_answer, predicted_answer)
         # TODO(shangyin) need to log incorrect versus not attempt
-        print(
-            "\n[red]Predicted Answer: "
-            + str(predicted_answer)
-            + "[/red]"
-            + "\n"
-            + "[green]True Answer: "
-            + str(true_answer)
-            + "[/green]"
-            + "\n"
-            + "[red]Correct?"
-            + str(result == "A")
-            + "[/red]\n"
-            + "[cyan]agent_id:"
-            + str(agent_id)
-            + "[/cyan]\n"
-        )
+        # print(
+        #     "\n[red]Predicted Answer: "
+        #     + str(predicted_answer)
+        #     + "[/red]"
+        #     + "\n"
+        #     + "[green]True Answer: "
+        #     + str(true_answer)
+        #     + "[/green]"
+        #     + "\n"
+        #     + "[red]Correct?"
+        #     + str(result == "A")
+        #     + "[/red]\n"
+        #     + "[cyan]agent_id:"
+        #     + str(agent_id)
+        #     + "[/cyan]\n"
+        # )
         return 1.0 if result == "A" else 0.0
 
     def simple_metric(self, predicted_answer, true_answer, datum):
-        print(
-            "\n[red]Predicted Answer: "
-            + str(predicted_answer)
-            + "[/red]"
-            + "\n"
-            + "[green]True Answer: "
-            + str(true_answer)
-            + "[/green]"
-            + "\n"
-            + "[red]Correct?"
-            + str(true_answer in predicted_answer)
-            + "[/red]\n"
-        )
+        # print(
+        #     "\n[red]Predicted Answer: "
+        #     + str(predicted_answer)
+        #     + "[/red]"
+        #     + "\n"
+        #     + "[green]True Answer: "
+        #     + str(true_answer)
+        #     + "[/green]"
+        #     + "\n"
+        #     + "[red]Correct?"
+        #     + str(true_answer in predicted_answer)
+        #     + "[/red]\n"
+        # )
 
         return 1.0 if true_answer in predicted_answer else 0.0
 
@@ -333,10 +333,10 @@ class NeuralDatabaseBenchmark(Benchmark):
 
 
 # configuration: testing archival memory
-archival_benchmark = NeuralDatabaseBenchmark(test_archival_memory=True)
-confidence_benchmark = NeuralDatabaseBenchmark(test_confidence=True)
+archival_memory_read_benchmark = LettaBenchmark(test_archival_memory=True)
+confidence_benchmark = LettaBenchmark(test_confidence=True)
 # configuration: before creating the agent, we put all supporting facts in the core memory
-core_memory_benchmark = NeuralDatabaseBenchmark(test_core_memory_in_memory=True)
-core_memory_benchmark_hard = NeuralDatabaseBenchmark(test_core_memory_hard=True)
+core_memory_read_benchmark = LettaBenchmark(test_core_memory_in_memory=True)
+core_memory_read_benchmark_hard = LettaBenchmark(test_core_memory_hard=True)
 
-core_memory_append_benchmark = NeuralDatabaseBenchmark(test_core_memory_append=True)
+core_memory_append_benchmark = LettaBenchmark(test_core_memory_append=True)

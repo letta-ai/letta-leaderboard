@@ -55,6 +55,6 @@ class Benchmark(metaclass=ABCMeta):
 ```
 
 ### To run a benchmark
-```python -m  leaderboard.evaluate --benchmark=letta_bench  --dataset_size=100 --timeout=100 --repeat=3 --benchmark_variable=core_memory_benchmark --model=openai-gpt-4.1-mini```
+```python -m  leaderboard.evaluate --benchmark=letta_bench  --dataset_size=100 --timeout=100 --repeat=3 --benchmark_variable=core_memory_read_benchmark --model=openai-gpt-4.1-mini```
 
 make sure `model=...` is in `leaderboard/llm_model_configs`.

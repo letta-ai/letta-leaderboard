@@ -1,6 +1,6 @@
 # Usage:
 # Before running, set "OPENAI_API_KEY" to together's OpenAI proxy key, and "OPENAI_API_KEY_NOT_PROXY" to your actual OpenAI key.
-# ./run_all_models.sh "python -m leaderboard.evaluate --benchmark=letta_bench --dataset_size=200 --timeout=10 --repeat=10 --benchmark_variable=core_memory_benchmark"
+# ./run_all_models.sh "python -m leaderboard.evaluate --benchmark=letta_bench --dataset_size=200 --timeout=10 --repeat=10 --benchmark_variable=core_memory_read_benchmark"
 
 # Define your list of models
 together_models=(
