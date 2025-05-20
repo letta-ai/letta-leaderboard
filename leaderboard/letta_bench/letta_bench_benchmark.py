@@ -29,11 +29,11 @@ obvious_facts = [
 class LettaBenchmark(Benchmark):
     def __init__(
         self,
-        test_archival_memory=False,
+        test_archival_memory_read=False,
         test_confidence=False,
-        test_core_memory_in_memory=False,
-        test_core_memory_append=False,
-        test_core_memory_hard=False,
+        test_core_memory_read=False,
+        test_core_memory_write=False,
+        test_core_memory_read_hard=False,
     ):
         raw_datasets = load_dataset(
             "json",
@@ -41,11 +41,11 @@ class LettaBenchmark(Benchmark):
         )["train"]
 
         self.test_confidence = test_confidence
-        self.test_archival_memory = test_archival_memory
-        self.test_core_memory_in_memory = test_core_memory_in_memory
-        self.test_core_memory_hard = test_core_memory_hard
+        self.test_archival_memory_read = test_archival_memory_read
+        self.test_core_memory_read = test_core_memory_read
+        self.test_core_memory_read_hard = test_core_memory_read_hard
 
-        self.test_core_memory_append = test_core_memory_append
+        self.test_core_memory_write = test_core_memory_write
         self.agent_core_memory_messages: dict[str, List[LettaMessageUnion]] = {}
         self.agent_datum_mapping: dict[str, Dotdict] = {}
         # map from supporting fact to agent id
@@ -65,7 +65,7 @@ class LettaBenchmark(Benchmark):
                     message = question
 
                 message_list = []
-                if test_core_memory_hard:
+                if test_core_memory_read_hard:
                     trick_question_idx = i
                     while True:
                         trick_question_idx += 1
@@ -95,14 +95,14 @@ class LettaBenchmark(Benchmark):
         self.benchmark_type = "feature"
 
     def setup_agent(self, datum, client, agent_id):
-        if self.test_core_memory_in_memory:
+        if self.test_core_memory_read:
             # because we already setup the corememory on creation, we don't need to setup again
             return
             self.setup_agent_core_memory(datum, client, agent_id)
-        elif self.test_archival_memory:
+        elif self.test_archival_memory_read:
             # defaulting to test archival memory
             self.setup_agent_archival_memory(datum, client, agent_id)
-        elif self.test_core_memory_append:
+        elif self.test_core_memory_write:
             return
 
     def setup_agent_archival_memory(self, datum, client: Letta, agent_id):
@@ -138,44 +138,13 @@ class LettaBenchmark(Benchmark):
             return confidence
 
         result = grade_sample(datum.message, true_answer, predicted_answer)
-        # TODO(shangyin) need to log incorrect versus not attempt
-        # print(
-        #     "\n[red]Predicted Answer: "
-        #     + str(predicted_answer)
-        #     + "[/red]"
-        #     + "\n"
-        #     + "[green]True Answer: "
-        #     + str(true_answer)
-        #     + "[/green]"
-        #     + "\n"
-        #     + "[red]Correct?"
-        #     + str(result == "A")
-        #     + "[/red]\n"
-        #     + "[cyan]agent_id:"
-        #     + str(agent_id)
-        #     + "[/cyan]\n"
-        # )
         return 1.0 if result == "A" else 0.0
 
     def simple_metric(self, predicted_answer, true_answer, datum):
-        # print(
-        #     "\n[red]Predicted Answer: "
-        #     + str(predicted_answer)
-        #     + "[/red]"
-        #     + "\n"
-        #     + "[green]True Answer: "
-        #     + str(true_answer)
-        #     + "[/green]"
-        #     + "\n"
-        #     + "[red]Correct?"
-        #     + str(true_answer in predicted_answer)
-        #     + "[/red]\n"
-        # )
-
         return 1.0 if true_answer in predicted_answer else 0.0
 
     def create_agent_fun(self, client: Letta, datum, llm_config, embedding_config):
-        if self.test_core_memory_in_memory or self.test_core_memory_hard:
+        if self.test_core_memory_read or self.test_core_memory_read_hard:
             supporting_fact_block = CreateBlock(
                 label="Supporting Facts",
                 value="\n".join(
@@ -191,7 +160,7 @@ class LettaBenchmark(Benchmark):
                 embedding_config=embedding_config,
                 memory_blocks=[supporting_fact_block],
             ).id
-        elif self.test_core_memory_append:
+        elif self.test_core_memory_write:
             # TODO(shangyin): this is not working, because we are using multi-thread
             # and the agent with the same fact will be created multiple times
             # first_supporting_fact = datum.supporting_fact[0]
@@ -269,7 +238,7 @@ class LettaBenchmark(Benchmark):
     def get_response(
         self, client: Letta, agent_id: str, datum: Dotdict
     ) -> LettaResponse:
-        if self.test_core_memory_hard:
+        if self.test_core_memory_read_hard:
             return super().get_response_from_message_list(client, agent_id, datum)[-1]
         return super().get_response(client, agent_id, datum)
 
@@ -277,66 +246,66 @@ class LettaBenchmark(Benchmark):
         self, client: Letta, agent_ids: list[str], evaluation_result: EvaluationResult
     ) -> dict:
         # TODO(shangyin): implement this
-        if self.test_archival_memory:
+        if self.test_archival_memory_read:
             return total_archival_usage(
                 client, agent_ids, evaluation_result.individual_scores
             )
         # control group for archival memory, lower is better
-        elif self.test_core_memory_in_memory:
+        elif self.test_core_memory_read:
             return total_archival_usage(
                 client, agent_ids, evaluation_result.individual_scores
             )
         # control group for core memory
-        elif self.test_core_memory_append:
+        elif self.test_core_memory_write:
             return self._get_core_memory_usage(agent_ids)
 
     def _get_core_memory_usage(self, agent_ids: list[str]) -> dict:
 
-        successful_core_memory_appends_all = []
-        golden_core_memory_appends_all = []
-        total_core_memory_appends_all = []
+        successful_core_memory_writes_all = []
+        golden_core_memory_writes_all = []
+        total_core_memory_writes_all = []
 
         for agent_id in agent_ids:
             datum = self.agent_datum_mapping[agent_id]
             person_names = [n for n in datum.name if n in datum.message]
             messages = self.agent_core_memory_messages[agent_id]
 
-            successful_core_memory_appends = 0
-            golden_core_memory_appends = 0
-            total_core_memory_appends = 0
+            successful_core_memory_writes = 0
+            golden_core_memory_writes = 0
+            total_core_memory_writes = 0
             for message in messages:
                 if (
                     message.message_type == "tool_call_message"
                     and message.tool_call.name == "core_memory_append"
                 ):
-                    total_core_memory_appends += 1
+                    total_core_memory_writes += 1
                     # this is a good core memory append
                     if any(
                         name in message.tool_call.arguments for name in person_names
                     ):
                         # TODO(shangyin): this is too relexed! Need to check if it succeed, and in the right block.
-                        successful_core_memory_appends += 1
+                        successful_core_memory_writes += 1
 
             for fact in datum.supporting_fact:
                 if any(name in fact for name in person_names):
-                    golden_core_memory_appends += 1
+                    golden_core_memory_writes += 1
 
-            successful_core_memory_appends_all.append(successful_core_memory_appends)
-            golden_core_memory_appends_all.append(golden_core_memory_appends)
-            total_core_memory_appends_all.append(total_core_memory_appends)
+            successful_core_memory_writes_all.append(successful_core_memory_writes)
+            golden_core_memory_writes_all.append(golden_core_memory_writes)
+            total_core_memory_writes_all.append(total_core_memory_writes)
 
         return {
-            "successful_core_memory_appends": successful_core_memory_appends_all,
-            "golden_core_memory_appends": golden_core_memory_appends_all,
-            "total_core_memory_appends": total_core_memory_appends_all,
+            "successful_core_memory_writes": successful_core_memory_writes_all,
+            "golden_core_memory_writes": golden_core_memory_writes_all,
+            "total_core_memory_writes": total_core_memory_writes_all,
         }
 
 
 # configuration: testing archival memory
-archival_memory_read_benchmark = LettaBenchmark(test_archival_memory=True)
+archival_memory_read_benchmark = LettaBenchmark(test_archival_memory_read=True)
 confidence_benchmark = LettaBenchmark(test_confidence=True)
 # configuration: before creating the agent, we put all supporting facts in the core memory
-core_memory_read_benchmark = LettaBenchmark(test_core_memory_in_memory=True)
-core_memory_read_benchmark_hard = LettaBenchmark(test_core_memory_hard=True)
+core_memory_read_benchmark = LettaBenchmark(test_core_memory_read=True)
+core_memory_read_benchmark_hard = LettaBenchmark(test_core_memory_read_hard=True)
 
-core_memory_append_benchmark = LettaBenchmark(test_core_memory_append=True)
+core_memory_write_benchmark = LettaBenchmark(test_core_memory_write=True)

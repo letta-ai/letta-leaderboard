@@ -8,7 +8,7 @@ fi
 
 all_benchmarks=(
     "archival_memory_read_benchmark"
-    "core_memory_append_benchmark"
+    "core_memory_write_benchmark"
     "core_memory_read_benchmark"
 )
 

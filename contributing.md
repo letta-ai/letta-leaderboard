@@ -19,7 +19,7 @@ And you will get results like:
   total_input_tokens: 10397
   total_output_tokens: 315
   archival_memory_read_benchmark: 11.0
-  core_memory_append_benchmark: 12.0
+  core_memory_write_benchmark: 12.0
   core_memory_read_benchmark: 7.0
 ```
 
