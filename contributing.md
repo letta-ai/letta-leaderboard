@@ -26,7 +26,7 @@ And you will get results like:
 
 ### Upload the result
 
-Now, calculate how much $ you spent based on the price of your model provider and `total_input_tokens + total_output_tokens`. Add this field as "total_cost" and create a PR to paste the result into `data/letta_bench_data.yaml`
+Now, calculate how much $ you spent based on the price of your model provider and `total_input_tokens + total_output_tokens`. Put 0 if it is not applicable. Add this field as "total_cost" and create a PR to paste the result into `data/letta_bench_data.yaml`
 
 
 
