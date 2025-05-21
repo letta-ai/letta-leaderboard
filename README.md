@@ -11,6 +11,7 @@ First set the environment variables for API keys. If using OpenAI proxy, then se
 export OPENAI_API_KEY=
 export ANTHROPIC_API_KEY=
 export OPENAI_API_KEY_NOT_PROXY=
+export GEMINI_API_KEY=
 ```
 
 ### Benchmark methods
@@ -20,7 +21,7 @@ Benchmark class is used to encapsulate raw datasets and provide interfaces to le
 
 # here is an overview for the benchmark class
 class Benchmark(metaclass=ABCMeta):
-    dataset: list[Dotdict]  # TODO(shangyin): change to a more specific type
+    dataset: list[Dotdict]
     benchmark_type: Literal["general", "feature"]  # need a way to specify feature
 
     @abstractmethod
@@ -35,21 +36,24 @@ class Benchmark(metaclass=ABCMeta):
         pass
 
     # This function is used to collect the usage statistics of the agents
-    # in the final result file, expect a dict with:
-    # { "usage_statistics": usage_statistics}
+    # in the final result file, return a UsageStatistics(run_stat: dict[any, any], agent_stat[agent_id, any])
     def get_usage_statistics(
         self, client: Letta, agent_ids: list[str], evaluation_result: EvaluationResult
     ) -> dict:
-        return {}
+        return UsageStatistics({}, {agent_id: {} for agent_id in agent_ids})
 
     # this allows the benchmark to request response from the evaluating agent
     # override to get customized response
+    # default behavior is sending a single "datum.message" 
     def get_response(
         self, client: Letta, agent_id: str, datum: Dotdict
     ) -> LettaResponse:
-        return super().get_response(client, agent_id, datum)
+        return client.agents.messages.create( 
+            agent_id=agent_id,
+            messages=[MessageCreate(role="user", content=datum.message)],
+        )
     
-    # IMPORTANT: this creates custom agents to start with the evaluation
+    # IMPORTANT: creates custom agents to start with the evaluation
     # if not defined, the evaluator will create a default agent
     def create_agent_fun(self, client: Letta, datum, llm_config, embedding_config):
         pass
