@@ -15,8 +15,8 @@ import traceback
 
 from leaderboard.utils import (
     EvaluationResult,
-    add_to_json,
     write_result,
+    write_usage_statistics,
 )
 
 
@@ -345,7 +345,9 @@ if __name__ == "__main__":
     benchmark.truncate_dataset(args.dataset_size)
 
     for i in range(args.repeat_from, args.repeat):
-        print(f"[green]Running evaluation {i + 1}/{args.repeat} for {args.benchmark_variable} [/green]")
+        print(
+            f"[green]Running evaluation {i + 1}/{args.repeat} for {args.benchmark_variable} [/green]"
+        )
         result = evaluate_multithread(
             benchmark,
             client,
@@ -360,17 +362,12 @@ if __name__ == "__main__":
         outfile_path = (
             args.output_file + f"_{i+1}"
             if args.output_file
-            else f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}/{model}{args.result_name_suffix}_{i+1}.json"
+            else f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}/{model}{args.result_name_suffix}_{i+1}"
         )
-        write_result(result, client_settings, model, outfile_path)
+        write_result(result, client_settings, model, f"{outfile_path}.json")
 
         usage_statistics = benchmark.get_usage_statistics(
             client, result.agent_ids, evaluation_result=result
         )
 
-        add_to_json(
-            outfile_path,
-            {
-                "usage_statistics": usage_statistics,
-            },
-        )
+        write_usage_statistics(outfile_path, usage_statistics)

@@ -3,7 +3,7 @@ from typing import Literal
 from letta_client import Letta, LettaResponse, MessageCreate
 
 
-from leaderboard.utils import Dotdict, EvaluationResult
+from leaderboard.utils import Dotdict, EvaluationResult, UsageStatistics
 
 
 class Benchmark(metaclass=ABCMeta):
@@ -69,6 +69,6 @@ class Benchmark(metaclass=ABCMeta):
 
     def get_usage_statistics(
         self, client: Letta, agent_id: str, evaluation_result: EvaluationResult
-    ) -> dict:
-        # default implementation
-        return {}
+    ) -> UsageStatistics:
+        # empty
+        return UsageStatistics({}, {})

@@ -23,6 +23,13 @@ class EvaluationResult:
     usage: dict = None
 
 
+@dataclass
+class UsageStatistics:
+    run_stat: dict
+    # agent id -> dict
+    agent_stat: dict
+
+
 def write_result_to_json(
     result: EvaluationResult, client_settings: dict, model: str, output_file: str
 ):
@@ -119,14 +126,22 @@ def add_archival_usage_to_json(
         json.dump(data, f)
 
 
-def add_to_json(file_path: str, value: dict):
-    with open(file_path) as f:
+def write_usage_statistics(file_path: str, usage: UsageStatistics):
+    with open(f"{file_path}.json") as f:
         data = json.load(f)
 
-    data.update(value)
+    data["run_stat"] = usage.run_stat
 
-    with open(file_path, "w") as f:
+    with open(f"{file_path}.json", "w") as f:
         json.dump(data, f)
+    print(usage.agent_stat)
+    for agent_id, stat in usage.agent_stat.items():
+        with open(f"{file_path}/{agent_id}.json") as f:
+            agent_data = json.load(f)
+        agent_data["agent_stat"] = stat
+
+        with open(f"{file_path}/{agent_id}.json", "w") as f:
+            json.dump(agent_data, f, indent=2)
 
 
 class Dotdict(dict):
@@ -415,4 +430,6 @@ if __name__ == "__main__":
             total_input_tokens,
             total_output_tokens,
         ) = collect_stat(result_dir, model, True)
-        print(f"{model},{round(mean_score, 2)},{total_input_tokens},{total_output_tokens}")
+        print(
+            f"{model},{round(mean_score, 2)},{total_input_tokens},{total_output_tokens}"
+        )
