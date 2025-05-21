@@ -134,7 +134,7 @@ def write_usage_statistics(file_path: str, usage: UsageStatistics):
 
     with open(f"{file_path}.json", "w") as f:
         json.dump(data, f)
-    print(usage.agent_stat)
+
     for agent_id, stat in usage.agent_stat.items():
         with open(f"{file_path}/{agent_id}.json") as f:
             agent_data = json.load(f)

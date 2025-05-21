@@ -65,7 +65,7 @@ class LettaBenchmark(Benchmark):
                             "supporting_fact": x["facts"],
                             "name": x["name"],
                             "supporting_fact_indices": [int(i) for i in idxs],
-                            "contridicting_facts": x.get("contridicting_facts", []),
+                            "contradicting_facts": x.get("contradicting_facts", []),
                         }
                     )
                 )
@@ -160,7 +160,7 @@ class CoreMemoryReadBenchmark(LettaBenchmark):
                             "supporting_fact": x["facts"],
                             "name": x["name"],
                             "supporting_fact_indices": [int(i) for i in idxs],
-                            "contridicting_facts": x.get("contridicting_facts", []),
+                            "contradicting_facts": x.get("contradicting_facts", []),
                         }
                     )
                 )
@@ -251,7 +251,7 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
             {},
             {
                 agent_id: {"memory_messages":[m.model_dump(mode="json") for m in messages]}
-                for agent_id, messages in self.agent_core_memory_messages.items()
+                for agent_id, messages in self.agent_core_memory_messages.items() if agent_id in agent_ids
             },
         )
 
