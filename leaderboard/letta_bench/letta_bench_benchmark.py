@@ -52,23 +52,41 @@ class LettaBenchmark(Benchmark):
 
     def _build_dataset(self) -> List[Dotdict]:
         data: List[Dotdict] = []
-        for i, x in enumerate(self.raw_datasets):
-            for q, a, idxs in zip(
-                x["question"], x["answer"], x["supporting_fact_indices"]
+
+        for raw_datum in self.raw_datasets:
+            facts = raw_datum["facts"]
+            name = raw_datum["name"]
+
+            for (
+                question,
+                answer,
+                support_indices,
+                contradiction,
+                contradiction_answer,
+            ) in zip(
+                raw_datum["question"],
+                raw_datum["answer"],
+                raw_datum["supporting_fact_indices"],
+                raw_datum["contradicting_facts"],
+                raw_datum["contradicting_answers"],
             ):
                 data.append(
                     Dotdict(
                         {
-                            "message": q,
-                            "message_list": [q],
-                            "answer": a,
-                            "supporting_fact": x["facts"],
-                            "name": x["name"],
-                            "supporting_fact_indices": [int(i) for i in idxs],
-                            "contradicting_facts": x.get("contradicting_facts", []),
+                            "message": question,
+                            "message_list": [question],
+                            "answer": answer,
+                            "supporting_fact": facts,
+                            "name": name,
+                            "supporting_fact_indices": [
+                                int(idx) for idx in support_indices
+                            ],
+                            "contradicting_fact": contradiction,
+                            "contradicting_answer": contradiction_answer,
                         }
                     )
                 )
+
         return data
 
     def setup_agent(self, datum: Dotdict, client: Letta, agent_id: str):
@@ -135,35 +153,39 @@ class CoreMemoryReadBenchmark(LettaBenchmark):
 
     def _build_dataset(self) -> List[Dotdict]:
         data: List[Dotdict] = []
-        for i, x in enumerate(self.raw_datasets):
-            for q, a, idxs in zip(
-                x["question"], x["answer"], x["supporting_fact_indices"]
+
+        for dataset_index, raw_datum in enumerate(self.raw_datasets):
+            facts = raw_datum["facts"]
+            entry_name = raw_datum["name"]
+
+            for question, answer in zip(
+                raw_datum["question"],
+                raw_datum["answer"],
             ):
-                msgs: List[str] = []
+                message_list: List[str] = []
+
                 if self.hard:
-                    j = i
+                    next_index = dataset_index
                     while True:
-                        j += 1
-                        cand = self.raw_datasets[j % len(self.raw_datasets)][
-                            "question"
-                        ][:3]
-                        if cand:
-                            msgs = cand
+                        next_index = (next_index + 1) % len(self.raw_datasets)
+                        candidates = self.raw_datasets[next_index]["question"][:3]
+                        if candidates:
+                            message_list = candidates
                             break
-                msgs.append(q)
+
+                message_list.append(question)
                 data.append(
                     Dotdict(
                         {
-                            "message": q,
-                            "message_list": msgs,
-                            "answer": a,
-                            "supporting_fact": x["facts"],
-                            "name": x["name"],
-                            "supporting_fact_indices": [int(i) for i in idxs],
-                            "contradicting_facts": x.get("contradicting_facts", []),
+                            "message": question,
+                            "message_list": message_list,
+                            "answer": answer,
+                            "supporting_fact": facts,
+                            "name": entry_name,
                         }
                     )
                 )
+
         return data
 
     def create_agent_fun(
@@ -250,10 +272,75 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
         return UsageStatistics(
             {},
             {
-                agent_id: {"memory_messages":[m.model_dump(mode="json") for m in messages]}
-                for agent_id, messages in self.agent_core_memory_messages.items() if agent_id in agent_ids
+                agent_id: {
+                    "memory_messages": [m.model_dump(mode="json") for m in messages]
+                }
+                for agent_id, messages in self.agent_core_memory_messages.items()
+                if agent_id in agent_ids
             },
         )
+
+
+class CoreMemoryUpdateBenchmark(LettaBenchmark):
+    def __init__(self):
+        super().__init__()
+
+        self.agent_core_memory_update_messages = {}
+
+    def _build_dataset(self):
+        dataset = super()._build_dataset()
+        for datum in dataset:
+            # now the correct answer is the contradicting answer!!
+            datum.answer = datum.contradicting_answer
+        return dataset
+
+    def create_agent_fun(
+        self,
+        client: Letta,
+        datum: Dotdict,
+        llm_config,
+        embedding_config,
+    ) -> str:
+        block = CreateBlock(
+            label="Supporting Facts",
+            value="\n".join(f"{i}. {f}" for i, f in enumerate(datum.supporting_fact)),
+        )
+        agent = client.agents.create(
+            llm_config=llm_config,
+            embedding_config=embedding_config,
+            memory_blocks=[block],
+        )
+        return agent.id
+
+    def setup_agent(self, datum, client, agent_id):
+        # we need to update the agent with datum.contradicting_facts
+        # datum.
+        # client.agents.messages.create
+        client.agents.messages.create(
+            agent_id=agent_id,
+            messages=[MessageCreate(role="user", content=datum.contradicting_fact)],
+        )
+        self.agent_core_memory_update_messages[agent_id] = client.agents.messages.list(
+            agent_id=agent_id, limit=1000
+        )
+        client.agents.messages.reset(agent_id=agent_id)
+        
+    def get_usage_statistics(
+        self,
+        client: Letta,
+        agent_ids: List[str],
+        evaluation_result: EvaluationResult,
+    ) -> dict:
+        return UsageStatistics(
+            {},
+            {
+                agent_id: {
+                    "memory_messages": [m.model_dump(mode="json") for m in messages]
+                }
+                for agent_id, messages in self.agent_core_memory_update_messages.items()
+                if agent_id in agent_ids
+            },
+        ) 
 
 
 # Final benchmark instances (names preserved)
@@ -262,4 +349,4 @@ core_memory_read_benchmark = CoreMemoryReadBenchmark()
 core_memory_read_benchmark_hard = CoreMemoryReadBenchmark(hard=True)
 core_memory_write_benchmark = CoreMemoryWriteBenchmark()
 core_memory_write_benchmark_hard = CoreMemoryWriteBenchmark(hard=True)
-core_memory_update_benchmark = LettaBenchmark()
+core_memory_update_benchmark = CoreMemoryUpdateBenchmark()

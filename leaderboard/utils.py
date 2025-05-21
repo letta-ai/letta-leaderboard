@@ -271,7 +271,7 @@ def grade_sample(question: str, target: str, predicted_answer: str) -> str:
 
 def request_openai(
     message_list: List[Dict[str, str]],
-    model: str = "gpt-4o-mini",
+    model: str = "gpt-4.1",
     temperature: float = 0,
     max_tokens: int = 2048,
     system_message: str = "You are a helpful assistant.",
