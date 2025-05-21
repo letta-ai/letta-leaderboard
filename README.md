@@ -1,12 +1,13 @@
-# letta-leaderboard
+# Letta Leaderboard
 
-Letta Leaderboard helps users select which language models work well in the Letta framework by reporting the performance of popular models on a series of tasks. The tasks are designed to test the core memory management functionality in Letta.  Models that are strong at function calling and aware of their limitations typically work well in Letta.
+The [Letta Leaderboard](https://docs.letta.com/leaderboard) helps users select which language models work well in the Letta framework by reporting the performance of popular models on a series of tasks. The tasks are designed to test the core memory management functionality in Letta.  Models that are strong at function calling and aware of their limitations typically work well in Letta.
 
+To view a table of the most recent results, visit [our docs page](https://docs.letta.com/leaderboard).
 
 # Setup
 
 First set the environment variables for API keys. If using OpenAI proxy, then set `OPENAI_API_KEY` to the corresponding provider used to set up the proxy, eg. Together AI. `OPENAI_API_KEY_NOT_PROXY` is used for the LLM-as-a-judge via OpenAI chat completions, set this to your OpenAI key.
-```
+```sh
 export OPENAI_API_KEY=
 export ANTHROPIC_API_KEY=
 export OPENAI_API_KEY_NOT_PROXY=
@@ -55,6 +56,8 @@ class Benchmark(metaclass=ABCMeta):
 ```
 
 ### To run a benchmark
-```python -m  leaderboard.evaluate --benchmark=letta_bench  --dataset_size=100 --timeout=100 --repeat=3 --benchmark_variable=core_memory_read_benchmark --model=openai-gpt-4.1-mini```
+```sh
+python -m  leaderboard.evaluate --benchmark=letta_bench  --dataset_size=100 --timeout=100 --repeat=3 --benchmark_variable=core_memory_read_benchmark --model=openai-gpt-4.1-mini
+```
 
 make sure `model=...` is in `leaderboard/llm_model_configs`.
