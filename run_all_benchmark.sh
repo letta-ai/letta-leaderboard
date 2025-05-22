@@ -8,11 +8,12 @@ fi
 
 all_benchmarks=(
     "archival_memory_read_benchmark"
-    "core_memory_write_benchmark"
+    "core_memory_write_benchmark_hard"
     "core_memory_read_benchmark"
+    "core_memory_update_benchmark"
 )
 
-dataset_size=1
+dataset_size=100
 
 for model in "$@"; do
     echo "Evaluating model: $model"
@@ -28,7 +29,7 @@ for model in "$@"; do
             --benchmark_variable="$benchmark" \
             --dataset_size="$dataset_size" \
             --timeout=300 \
-            --repeat=1 \
+            --repeat=3 \
             --num_threads=16 \
             --model="$model"
 
