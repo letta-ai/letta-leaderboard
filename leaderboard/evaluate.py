@@ -1,58 +1,52 @@
 import argparse
-from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
-import datetime
 import importlib
 import json
 import os
-from typing import Callable
+import datetime
+import traceback
+import asyncio
+from typing import Callable, Any
 from tqdm import tqdm
-from letta_client import LettaResponse, MessageCreate
+from rich import print
+
+from letta_client import AsyncLetta, MessageCreate, LlmConfig, EmbeddingConfig
 from leaderboard.agent import create_base_agent
 from leaderboard.benchmark import Benchmark
-from letta_client import Letta, LlmConfig, EmbeddingConfig
-from rich import print
-import traceback
-
-from leaderboard.utils import (
-    EvaluationResult,
-    write_result,
-    write_usage_statistics,
-)
+from leaderboard.utils import EvaluationResult, write_result, write_usage_statistics
 
 
-def extract_last_message(response: LettaResponse) -> str:
+def extract_last_message(response: Any) -> str:
     for message in response.messages[::-1]:
         if message.message_type == "assistant_message":
             return message.content
-    # print(f"[red]No message found in response {response}[/red]")
     return ""
 
 
-def evaluate(
+async def evaluate(
     benchmark: Benchmark,
-    client: Letta,
-    create_agent_fun: Callable[[Letta], str],
+    client: AsyncLetta,
+    create_agent_fun: Callable[[AsyncLetta, Any], asyncio.Future],
 ) -> EvaluationResult:
     total_score = 0
     total = len(benchmark.dataset)
     individual_scores = []
-
-    progress_bar = tqdm(benchmark.dataset, desc=f"Score: {total_score}/{total}")
     agent_ids = []
-
     input_tokens = 0
     output_tokens = 0
 
+    progress_bar = tqdm(benchmark.dataset, desc=f"Score: {total_score}/{total}")
+
     for datum in progress_bar:
-        agent_id = create_agent_fun(client)
-        benchmark.setup_agent(
-            datum, client, agent_id
-        )  # sets up the agent for current data
-        response = client.send_message(
-            agent_id=agent_id, message=datum.message, role="user"
+        agent_id = await create_agent_fun(client, datum)
+        await benchmark.setup_agent(datum, client, agent_id)
+        response = await client.agents.messages.create(
+            agent_id=agent_id,
+            messages=[MessageCreate(role="user", content=datum.message)],
         )
         predicted_answer = extract_last_message(response)
-        current_score = benchmark.metric(predicted_answer, datum.answer)
+        current_score = await benchmark.metric(
+            predicted_answer, datum.answer, datum, agent_id
+        )
         individual_scores.append(current_score)
         total_score += current_score
         input_tokens += response.usage.prompt_tokens
@@ -71,25 +65,23 @@ def evaluate(
     )
 
 
-def run_single_data(datum, create_agent_fun, client, benchmark):
-    agent_id = create_agent_fun(client)
-    benchmark.setup_agent(datum, client, agent_id)  # sets up the agent for current data
+async def run_single_data(
+    datum: Any,
+    create_agent_fun: Callable[[AsyncLetta, Any], asyncio.Future],
+    client: AsyncLetta,
+    benchmark: Benchmark,
+):
+    agent_id = await create_agent_fun(client, datum)
+    await benchmark.setup_agent(datum, client, agent_id)
     try:
-        response = client.agents.messages.create(
+        response = await client.agents.messages.create(
             agent_id=agent_id,
-            messages=[
-                MessageCreate(
-                    role="user",
-                    content=datum.message,
-                )
-            ],
+            messages=[MessageCreate(role="user", content=datum.message)],
         )
         predicted_answer = extract_last_message(response)
-        score = benchmark.metric(
+        score = await benchmark.metric(
             predicted_answer, datum.answer, datum.message, agent_id
         )
-        # print the score in red
-        # print("[red]Score: " + str(score) + "[/red]")
         return (
             agent_id,
             score,
@@ -98,57 +90,40 @@ def run_single_data(datum, create_agent_fun, client, benchmark):
         )
     except Exception as e:
         print(f"[red]Error in run_single_data: {e}[/red]")
-        return (
-            agent_id,
-            0,
-            0,
-            0,
-        )
+        return (agent_id, 0, 0, 0)
 
 
-def evaluate_multithread(
+async def evaluate_concurrent(
     benchmark: Benchmark,
-    client: Letta,
-    create_agent_fun,
-    num_thread=8,
-    timeout=60,
+    client: AsyncLetta,
+    create_agent_fun: Callable[[AsyncLetta, Any], asyncio.Future],
+    timeout: int = 60,
+    max_concurrency: int = 16,
 ):
     total = len(benchmark.dataset)
-    progress_bar = tqdm(total=total, desc="Score: 0/" + str(total))
+    progress_bar = tqdm(total=total, desc=f"Score: 0/{total}")
 
     agent_ids = []
     individual_scores = []
     input_tokens = 0
     output_tokens = 0
     total_score = 0
+    history: dict[str, tuple[str, list, list]] = {}
 
-    def process_datum_with_retry(datum, max_retries=5, timeout=None):
-        for attempt in range(max_retries):
-            try:
-                return process_datum(datum)
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    continue
-                else:
-                    raise e
+    MAX_RETRIES = 5
 
-    def process_datum(datum):
-        agent_id = create_agent_fun(client, datum)
-        benchmark.setup_agent(
-            datum, client, agent_id
-        )  # sets up the agent for current data
-        response = benchmark.get_response(client, agent_id, datum)
-        # FIXME(shangyin) if get response does something this could fail
+    async def process_datum(datum: Any):
+        agent_id = await create_agent_fun(client, datum)
+        await benchmark.setup_agent(datum, client, agent_id)
+        response = await benchmark.get_response(client, agent_id, datum)
         input_message = datum.message
         response_messages = [m.model_dump(mode="json") for m in response.messages]
         all_messages = [
             m.model_dump(mode="json")
-            for m in client.agents.messages.list(agent_id=agent_id, limit=100)
+            for m in await client.agents.messages.list(agent_id=agent_id, limit=100)
         ]
         predicted_answer = extract_last_message(response)
-        score = benchmark.metric(predicted_answer, datum.answer, datum, agent_id)
-        # print the score in red
-        # print("[red]Score: " + str(score) + "[/red]")
+        score = await benchmark.metric(predicted_answer, datum.answer, datum, agent_id)
         return (
             agent_id,
             score,
@@ -159,49 +134,51 @@ def evaluate_multithread(
             all_messages,
         )
 
-    NUM_RETRIES = 5
-    with ThreadPoolExecutor(max_workers=num_thread) as executor:
-        future_to_datum = {
-            executor.submit(process_datum_with_retry, datum, NUM_RETRIES): datum
-            for datum in benchmark.dataset
-        }
-
-        total_success = 0
-
-        history = {}
-
-        agent_id = None
-
-        for future in as_completed(future_to_datum):
+    async def process_with_retry(datum: Any):
+        for attempt in range(MAX_RETRIES):
             try:
-                (
-                    agent_id,
-                    score,
-                    input_t,
-                    output_t,
-                    input_message,
-                    response_messages,
-                    all_messages,
-                ) = future.result(timeout=timeout * NUM_RETRIES)
-                agent_ids.append(agent_id)
-                individual_scores.append(score)
-                total_score += score
-                input_tokens += input_t
-                output_tokens += output_t
-                total_success += 1
-                history[agent_id] = (input_message, response_messages, all_messages)
-            except Exception as e:
-                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                print(f"[red]Error in future: {e} at " + current_time)
-                print(traceback.format_exc())
-                print(f"[red] agent id is {agent_id}[/red]")
-                continue  # Skip failed future
+                return await process_datum(datum)
+            except Exception:
+                if attempt == MAX_RETRIES - 1:
+                    raise
 
-            progress_bar.set_description(f"Score: {total_score}/{total}")
-            progress_bar.update(1)
-            progress_bar.refresh()
+    semaphore = asyncio.Semaphore(max_concurrency)
+
+    async def process_with_semaphore(datum: Any):
+        async with semaphore:
+            return await process_with_retry(datum)
+
+    tasks = [asyncio.create_task(process_with_semaphore(d)) for d in benchmark.dataset]
+
+    for task in asyncio.as_completed(tasks):
+        try:
+            (
+                agent_id,
+                score,
+                in_t,
+                out_t,
+                input_message,
+                response_messages,
+                all_messages,
+            ) = await asyncio.wait_for(task, timeout * MAX_RETRIES)
+            agent_ids.append(agent_id)
+            individual_scores.append(score)
+            total_score += score
+            input_tokens += in_t
+            output_tokens += out_t
+            history[agent_id] = (input_message, response_messages, all_messages)
+        except Exception as e:
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(f"[red]Error in task: {e} at {now}[/red]")
+            print(traceback.format_exc())
+            continue
+
+        progress_bar.update(1)
+        progress_bar.set_description(f"Score: {total_score}/{total}")
+        progress_bar.refresh()
 
     progress_bar.close()
+
     return EvaluationResult(
         score=total_score,
         agent_ids=agent_ids,
@@ -212,117 +189,86 @@ def evaluate_multithread(
     )
 
 
-if __name__ == "__main__":
+async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--benchmark",
         type=str,
-        help="the name of the benchmark - assuming benchmark_name/benchmark_name_benchmark.py exists",
+        help="Name of the benchmark module (e.g. foo/foo_benchmark.py)",
     )
-
     parser.add_argument(
         "--model",
         type=str,
-        help="""Model to use. Available: [azure-gpt-4o-mini,
-            bedrock-claude-3-5-sonnet,
-            claude-3-5-haiku,
-            claude-3-5-sonnet,
-            deepseek-reasoner,
-            gemini-pro,
-            gemini-vertex,
-            groq,
-            letta-hosted,
-            ollama,
-            openai-gpt-3.5-turbo,
-            openai-gpt-4o-mini,
-            openai-gpt-4o,
-            together-llama-3-1-405b,
-            together-llama-3-70b,
-            together-mistral-small-24B-Instruct-2501,
-            xai-grok-2,]""",
         default="openai-gpt-4o-mini",
+        help="Model to use",
     )
-
-    parser.add_argument(
-        "--num_threads",
-        type=int,
-        help="Number of threads to use for evaluation",
-        default=16,
-    )
-
     parser.add_argument(
         "--output_file",
         type=str,
-        help="Output file to write the result",
         default="",
+        help="Base output file path",
     )
-
     parser.add_argument(
         "--dataset_size",
         type=int,
-        help="Size of the dataset to evaluate",
         default=100,
+        help="Number of datapoints to run",
     )
-
     parser.add_argument(
         "--timeout",
         type=int,
-        help="Timeout for each evaluation",
         default=60,
+        help="Per-task timeout in seconds",
     )
-
     parser.add_argument(
         "--benchmark_variable",
         type=str,
-        help="The variable name of the benchmark to use",
         default="benchmark",
+        help="Variable name in the module",
     )
-
     parser.add_argument(
         "--result_name_suffix",
         type=str,
         default="",
+        help="Suffix to append to result filenames",
     )
-
     parser.add_argument(
         "--repeat",
         type=int,
         default=1,
+        help="How many times to repeat",
     )
-
     parser.add_argument(
         "--repeat_from",
         type=int,
         default=0,
+        help="Start index for repeat",
     )
-
     parser.add_argument(
         "--letta_server",
         type=str,
         default="http://localhost:8283",
+        help="Base URL for Letta server",
     )
-
-    # import the benchmark
+    parser.add_argument(
+        "--max_concurrency",
+        type=int,
+        default=16,
+        help="Maximum number of concurrent evaluation tasks",
+    )
     args = parser.parse_args()
 
-    client_settings = {
-        "base_url": args.letta_server,
-    }
-    client = Letta(**client_settings)
+    client_settings = {"base_url": args.letta_server}
+    client = AsyncLetta(**client_settings)
 
-    bench = importlib.import_module(
+    bench_mod = importlib.import_module(
         f".{args.benchmark}.{args.benchmark}_benchmark", "leaderboard"
     )
+    benchmark: Benchmark = getattr(bench_mod, args.benchmark_variable)
 
-    benchmark: Benchmark = getattr(bench, args.benchmark_variable)
-
-    model = args.model
-
-    model_config_path = f"leaderboard/llm_model_configs/{model}.json"
-
+    model_config_path = f"leaderboard/llm_model_configs/{args.model}.json"
     with open(model_config_path) as f:
         model_config = json.load(f)
-
     llm_config = LlmConfig(**model_config)
     embedding_config = EmbeddingConfig(
         embedding_model="text-embedding-ada-002",
@@ -333,41 +279,41 @@ if __name__ == "__main__":
     )
 
     if getattr(benchmark, "create_agent_fun", None):
-        create_base_agent_fun = lambda client, datum: benchmark.create_agent_fun(
-            client, datum, llm_config, embedding_config
-        )
 
+        def create_base_agent_fun(c, d):
+            return benchmark.create_agent_fun(c, d, llm_config, embedding_config)
     else:
-        create_base_agent_fun = lambda client, datum: create_base_agent(
-            client, datum, llm_config, embedding_config
-        )
+        create_base_agent_fun = create_base_agent
 
     benchmark.truncate_dataset(args.dataset_size)
 
     for i in range(args.repeat_from, args.repeat):
         print(
-            f"[green]Running evaluation {i + 1}/{args.repeat} for {args.benchmark_variable} [/green]"
+            f"[green]Running eval {i + 1}/{args.repeat} for {args.benchmark_variable}[/green]"
         )
-        result = evaluate_multithread(
+        result = await evaluate_concurrent(
             benchmark,
             client,
             create_base_agent_fun,
-            num_thread=args.num_threads,
             timeout=args.timeout,
+            max_concurrency=args.max_concurrency,
         )
-        os.makedirs(
-            f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}",
-            exist_ok=True,
+        out_dir = (
+            f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}"
         )
-        outfile_path = (
-            args.output_file + f"_{i+1}"
+        os.makedirs(out_dir, exist_ok=True)
+        base = (
+            args.output_file + f"_{i + 1}"
             if args.output_file
-            else f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}/{model}{args.result_name_suffix}_{i+1}"
+            else f"{out_dir}/{args.model}{args.result_name_suffix}_{i + 1}"
         )
-        write_result(result, client_settings, model, f"{outfile_path}.json")
+        write_result(result, client_settings, args.model, f"{base}.json")
 
-        usage_statistics = benchmark.get_usage_statistics(
+        usage_stats = await benchmark.get_usage_statistics(
             client, result.agent_ids, evaluation_result=result
         )
+        write_usage_statistics(base, usage_stats)
 
-        write_usage_statistics(outfile_path, usage_statistics)
+
+if __name__ == "__main__":
+    asyncio.run(main())

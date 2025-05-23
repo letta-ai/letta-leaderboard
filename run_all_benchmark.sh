@@ -30,7 +30,7 @@ for model in "$@"; do
             --dataset_size="$dataset_size" \
             --timeout=300 \
             --repeat=3 \
-            --num_threads=16 \
+            --max_concurrency=16 \
             --model="$model"
 
         result_dir="results/letta_bench_${benchmark}_${dataset_size}"
