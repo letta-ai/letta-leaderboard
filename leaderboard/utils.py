@@ -25,14 +25,15 @@ class EvaluationResult:
     usage: dict = None
 
 
-
 @dataclass
 class UsageStatistics:
     run_stat: dict
     agent_stat: dict
 
 
-async def total_archival_usage(client: AsyncLetta, agent_ids: list[str], individual_scores: list[float]):
+async def total_archival_usage(
+    client: AsyncLetta, agent_ids: list[str], individual_scores: list[float]
+):
     total_archival_memory = 0
     total_archival_score = 0
     agent_archival_ids = []
@@ -54,15 +55,24 @@ async def total_archival_usage(client: AsyncLetta, agent_ids: list[str], individ
     }
 
 
-async def add_archival_usage_to_json(client: AsyncLetta, agent_ids: list[str], individual_scores: list[float], file_path: str):
+async def add_archival_usage_to_json(
+    client: AsyncLetta,
+    agent_ids: list[str],
+    individual_scores: list[float],
+    file_path: str,
+):
     with open(file_path) as f:
         data = json.load(f)
-    data["archival_usage"] = await total_archival_usage(client, agent_ids, individual_scores)
+    data["archival_usage"] = await total_archival_usage(
+        client, agent_ids, individual_scores
+    )
     with open(file_path, "w") as f:
         json.dump(data, f)
 
 
-def write_result_to_json(result: EvaluationResult, client_settings: dict, model: str, output_file: str):
+def write_result_to_json(
+    result: EvaluationResult, client_settings: dict, model: str, output_file: str
+):
     with open(output_file, "w") as f:
         json.dump(
             {
@@ -79,13 +89,19 @@ def write_result_to_json(result: EvaluationResult, client_settings: dict, model:
     print(f"[green]Result written to {output_file}[/green]")
 
 
-def write_result(result: EvaluationResult, client_settings: dict, model: str, output_file: str):
+def write_result(
+    result: EvaluationResult, client_settings: dict, model: str, output_file: str
+):
     write_result_to_json(result, client_settings, model, output_file)
     output_path = os.path.dirname(output_file)
     subdir = os.path.splitext(os.path.basename(output_file))[0]
     agent_dir = os.path.join(output_path, subdir)
     os.makedirs(agent_dir, exist_ok=True)
-    for agent_id, (input_message, output_messages, all_messages) in result.history.items():
+    for agent_id, (
+        input_message,
+        output_messages,
+        all_messages,
+    ) in result.history.items():
         agent_file_path = os.path.join(agent_dir, f"{agent_id}.json")
         with open(agent_file_path, "w") as f:
             json.dump(
@@ -118,7 +134,9 @@ class Dotdict(dict):
         try:
             return super().__getitem__(key)
         except KeyError as e:
-            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{key}'") from e
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{key}'"
+            ) from e
 
     def __setattr__(self, key, value):
         super().__setitem__(key, value)
@@ -127,7 +145,9 @@ class Dotdict(dict):
         try:
             super().__delitem__(key)
         except KeyError as e:
-            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{key}'") from e
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{key}'"
+            ) from e
 
 
 GRADER_TEMPLATE = """
@@ -215,7 +235,6 @@ Just return the letters "A", "B", or "C", with no text around it.
 CHOICE_LETTERS = ["A", "B", "C"]
 CHOICE_STRINGS = ["CORRECT", "INCORRECT", "NOT_ATTEMPTED"]
 CHOICE_LETTER_TO_STRING = dict(zip(CHOICE_LETTERS, CHOICE_STRINGS))
-
 
 
 async def grade_sample(question: str, target: str, predicted_answer: str) -> str:
@@ -383,6 +402,8 @@ if __name__ == "__main__":
                 total_input_tokens,
                 total_output_tokens,
             ) = collect_stat(result_dir, model, True)
-            print(f"{model},{round(mean_score, 2)},{total_input_tokens},{total_output_tokens}")
+            print(
+                f"{model},{round(mean_score, 2)},{total_input_tokens},{total_output_tokens}"
+            )
 
     asyncio.run(main())

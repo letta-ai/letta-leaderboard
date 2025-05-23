@@ -94,16 +94,20 @@ class LettaBenchmark(Benchmark):
         llm_config,
         embedding_config,
     ) -> str:
-        return (await client.agents.create(
-            llm_config=llm_config, embedding_config=embedding_config
-        )).id
+        return (
+            await client.agents.create(
+                llm_config=llm_config, embedding_config=embedding_config
+            )
+        ).id
 
     async def get_response(
         self, client: AsyncLetta, agent_id: str, datum: Dotdict
     ) -> LettaResponse:
         return await super().get_response(client, agent_id, datum)
 
-    async def metric(self, predicted: str, true: str, datum: Dotdict, agent_id: str) -> float:
+    async def metric(
+        self, predicted: str, true: str, datum: Dotdict, agent_id: str
+    ) -> float:
         result = await grade_sample(datum.message, true, predicted)
         return 1.0 if result == "A" else 0.0
 
@@ -193,7 +197,9 @@ class CoreMemoryReadBenchmark(LettaBenchmark):
         self, client: AsyncLetta, agent_id: str, datum: Dotdict
     ) -> LettaResponse:
         if self.hard:
-            return (await super().get_response_from_message_list(client, agent_id, datum))[-1]
+            return (
+                await super().get_response_from_message_list(client, agent_id, datum)
+            )[-1]
         return await super().get_response(client, agent_id, datum)
 
 
@@ -293,9 +299,9 @@ class CoreMemoryUpdateBenchmark(LettaBenchmark):
             agent_id=agent_id,
             messages=[MessageCreate(role="user", content=datum.contradicting_fact)],
         )
-        self.agent_core_memory_update_messages[agent_id] = await client.agents.messages.list(
-            agent_id=agent_id, limit=1000
-        )
+        self.agent_core_memory_update_messages[
+            agent_id
+        ] = await client.agents.messages.list(agent_id=agent_id, limit=1000)
         await client.agents.messages.reset(agent_id=agent_id)
 
     async def get_usage_statistics(

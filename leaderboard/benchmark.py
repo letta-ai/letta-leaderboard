@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABCMeta
-from typing import Literal
+from typing import Literal, Optional, Callable
 from letta_client import AsyncLetta, LettaResponse, MessageCreate
 
 from leaderboard.utils import Dotdict, EvaluationResult, UsageStatistics
@@ -8,9 +8,12 @@ from leaderboard.utils import Dotdict, EvaluationResult, UsageStatistics
 class Benchmark(metaclass=ABCMeta):
     dataset: list[Dotdict]
     benchmark_type: Literal["general", "feature"]
+    create_agent_fun: Optional[Callable] = None
 
     @abstractmethod
-    async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str) -> None:
+    async def setup_agent(
+        self, datum: Dotdict, client: AsyncLetta, agent_id: str
+    ) -> None:
         pass
 
     @abstractmethod

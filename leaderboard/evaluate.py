@@ -44,7 +44,9 @@ async def evaluate(
             messages=[MessageCreate(role="user", content=datum.message)],
         )
         predicted_answer = extract_last_message(response)
-        current_score = await benchmark.metric(predicted_answer, datum.answer, datum, agent_id)
+        current_score = await benchmark.metric(
+            predicted_answer, datum.answer, datum, agent_id
+        )
         individual_scores.append(current_score)
         total_score += current_score
         input_tokens += response.usage.prompt_tokens
@@ -77,7 +79,9 @@ async def run_single_data(
             messages=[MessageCreate(role="user", content=datum.message)],
         )
         predicted_answer = extract_last_message(response)
-        score = await benchmark.metric(predicted_answer, datum.answer, datum.message, agent_id)
+        score = await benchmark.metric(
+            predicted_answer, datum.answer, datum.message, agent_id
+        )
         return (
             agent_id,
             score,
@@ -268,16 +272,18 @@ async def main():
     )
 
     if getattr(benchmark, "create_agent_fun", None):
-        create_base_agent_fun = lambda c, d: benchmark.create_agent_fun(
-            c, d, llm_config, embedding_config
-        )
+
+        def create_base_agent_fun(c, d):
+            return benchmark.create_agent_fun(c, d, llm_config, embedding_config)
     else:
         create_base_agent_fun = create_base_agent
 
     benchmark.truncate_dataset(args.dataset_size)
 
     for i in range(args.repeat_from, args.repeat):
-        print(f"[green]Running eval {i+1}/{args.repeat} for {args.benchmark_variable}[/green]")
+        print(
+            f"[green]Running eval {i + 1}/{args.repeat} for {args.benchmark_variable}[/green]"
+        )
         result = await evaluate_concurrent(
             benchmark,
             client,
@@ -285,12 +291,14 @@ async def main():
             # num_thread=args.num_threads,
             timeout=args.timeout,
         )
-        out_dir = f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}"
+        out_dir = (
+            f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}"
+        )
         os.makedirs(out_dir, exist_ok=True)
         base = (
-            args.output_file + f"_{i+1}"
+            args.output_file + f"_{i + 1}"
             if args.output_file
-            else f"{out_dir}/{args.model}{args.result_name_suffix}_{i+1}"
+            else f"{out_dir}/{args.model}{args.result_name_suffix}_{i + 1}"
         )
         write_result(result, client_settings, args.model, f"{base}.json")
 

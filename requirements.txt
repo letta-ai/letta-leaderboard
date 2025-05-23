@@ -2,4 +2,4 @@ letta
 rich
 letta_client
 datasets
-tqdm
+ruff
