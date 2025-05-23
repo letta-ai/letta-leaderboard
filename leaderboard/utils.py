@@ -1,12 +1,14 @@
 import argparse
+import asyncio
 from dataclasses import dataclass
 import json
 import os
 import re
-import time
 from typing import Dict, List
 
-from letta_client import Letta
+import openai
+
+from letta_client import AsyncLetta
 from rich import print
 
 
@@ -23,47 +25,67 @@ class EvaluationResult:
     usage: dict = None
 
 
+
 @dataclass
 class UsageStatistics:
     run_stat: dict
-    # agent id -> dict
     agent_stat: dict
 
 
-def write_result_to_json(
-    result: EvaluationResult, client_settings: dict, model: str, output_file: str
-):
-    with open(output_file, "w") as f:
-        f.write(
-            json.dumps(
-                {
-                    "score": result.score,
-                    "model": model,
-                    "input_tokens": result.input_tokens,
-                    "output_tokens": result.output_tokens,
-                    "client_settings": client_settings,
-                    "agent_ids": result.agent_ids,
-                    "individual_scores": result.individual_scores,
-                }
-            )
-        )
+async def total_archival_usage(client: AsyncLetta, agent_ids: list[str], individual_scores: list[float]):
+    total_archival_memory = 0
+    total_archival_score = 0
+    agent_archival_ids = []
+    for agent_id, score in zip(agent_ids, individual_scores):
+        messages = await client.agents.messages.list(agent_id=agent_id)
+        for message in messages:
+            if (
+                message.message_type == "tool_call_message"
+                and message.tool_call.name == "archival_memory_search"
+            ):
+                total_archival_memory += 1
+                total_archival_score += score
+                agent_archival_ids.append(agent_id)
+                break
+    return {
+        "total_archival_count": total_archival_memory,
+        "total_archival_score": total_archival_score,
+        "agent_archival_ids": agent_archival_ids,
+    }
 
+
+async def add_archival_usage_to_json(client: AsyncLetta, agent_ids: list[str], individual_scores: list[float], file_path: str):
+    with open(file_path) as f:
+        data = json.load(f)
+    data["archival_usage"] = await total_archival_usage(client, agent_ids, individual_scores)
+    with open(file_path, "w") as f:
+        json.dump(data, f)
+
+
+def write_result_to_json(result: EvaluationResult, client_settings: dict, model: str, output_file: str):
+    with open(output_file, "w") as f:
+        json.dump(
+            {
+                "score": result.score,
+                "model": model,
+                "input_tokens": result.input_tokens,
+                "output_tokens": result.output_tokens,
+                "client_settings": client_settings,
+                "agent_ids": result.agent_ids,
+                "individual_scores": result.individual_scores,
+            },
+            f,
+        )
     print(f"[green]Result written to {output_file}[/green]")
 
 
-def write_result(
-    result: EvaluationResult, client_settings: dict, model: str, output_file: str
-):
+def write_result(result: EvaluationResult, client_settings: dict, model: str, output_file: str):
     write_result_to_json(result, client_settings, model, output_file)
     output_path = os.path.dirname(output_file)
     subdir = os.path.splitext(os.path.basename(output_file))[0]
     agent_dir = os.path.join(output_path, subdir)
     os.makedirs(agent_dir, exist_ok=True)
-    for agent_id, (
-        input_message,
-        output_messages,
-        all_messages,
-    ) in result.history.items():
+    for agent_id, (input_message, output_messages, all_messages) in result.history.items():
         agent_file_path = os.path.join(agent_dir, f"{agent_id}.json")
         with open(agent_file_path, "w") as f:
             json.dump(
@@ -77,69 +99,16 @@ def write_result(
             )
 
 
-def total_archival_usage(
-    client: Letta, agent_ids: list[str], individual_scores: list[float]
-):
-    total_archival_memory = 0
-    total_archival_score = 0
-    agent_archival_ids = []
-    for agent_id, score in zip(agent_ids, individual_scores):
-        messages = client.agents.messages.list(agent_id=agent_id)
-        for message in messages:
-            if (
-                message.message_type == "tool_call_message"
-                and message.tool_call.name == "archival_memory_search"
-            ):
-                total_archival_memory += 1
-                total_archival_score += score
-                agent_archival_ids.append(agent_id)
-                break
-
-    return {
-        "total_archival_count": total_archival_memory,
-        "total_archival_score": total_archival_score,
-        "agent_archival_ids": agent_archival_ids,
-    }
-
-
-def total_archival_usage_from_file(file_path: str):
-    with open(file_path) as f:
-        data = json.load(f)
-    agent_ids = data["agent_ids"]
-    client_settings = data["client_settings"]
-    client = Letta(**client_settings)
-
-    individual_scores = data["individual_scores"]
-
-    total_archival_usage(client, agent_ids, individual_scores)
-
-
-def add_archival_usage_to_json(
-    client: Letta, agent_ids: list[str], individual_scores: list[float], file_path: str
-):
-    with open(file_path) as f:
-        data = json.load(f)
-
-    data["archival_usage"] = total_archival_usage(client, agent_ids, individual_scores)
-
-    with open(file_path, "w") as f:
-        json.dump(data, f)
-
-
 def write_usage_statistics(file_path: str, usage: UsageStatistics):
     with open(f"{file_path}.json") as f:
         data = json.load(f)
-
     data["run_stat"] = usage.run_stat
-
     with open(f"{file_path}.json", "w") as f:
         json.dump(data, f)
-
     for agent_id, stat in usage.agent_stat.items():
         with open(f"{file_path}/{agent_id}.json") as f:
             agent_data = json.load(f)
         agent_data["agent_stat"] = stat
-
         with open(f"{file_path}/{agent_id}.json", "w") as f:
             json.dump(agent_data, f, indent=2)
 
@@ -149,9 +118,7 @@ class Dotdict(dict):
         try:
             return super().__getitem__(key)
         except KeyError as e:
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{key}'"
-            ) from e
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{key}'") from e
 
     def __setattr__(self, key, value):
         super().__setitem__(key, value)
@@ -160,12 +127,7 @@ class Dotdict(dict):
         try:
             super().__delitem__(key)
         except KeyError as e:
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{key}'"
-            ) from e
-
-
-import openai
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{key}'") from e
 
 
 GRADER_TEMPLATE = """
@@ -255,21 +217,18 @@ CHOICE_STRINGS = ["CORRECT", "INCORRECT", "NOT_ATTEMPTED"]
 CHOICE_LETTER_TO_STRING = dict(zip(CHOICE_LETTERS, CHOICE_STRINGS))
 
 
-def grade_sample(question: str, target: str, predicted_answer: str) -> str:
+
+async def grade_sample(question: str, target: str, predicted_answer: str) -> str:
     grader_prompt = GRADER_TEMPLATE.format(
-        question=question,
-        target=target,
-        predicted_answer=predicted_answer,
+        question=question, target=target, predicted_answer=predicted_answer
     )
-
     prompt_messages = [dict(content=grader_prompt, role="user")]
-    grading_response = request_openai(prompt_messages)
-
+    grading_response = await request_openai(prompt_messages)
     match = re.search(r"(A|B|C)", grading_response)
-    return match.group(0) if match else "C"  # Default to "NOT_ATTEMPTED" if no match
+    return match.group(0) if match else "C"
 
 
-def request_openai(
+async def request_openai(
     message_list: List[Dict[str, str]],
     model: str = "gpt-4.1",
     temperature: float = 0,
@@ -277,19 +236,18 @@ def request_openai(
     system_message: str = "You are a helpful assistant.",
 ) -> str:
     api_key = os.getenv("OPENAI_API_KEY_NOT_PROXY")
-    client = openai.OpenAI(api_key=api_key, base_url="https://api.openai.com/v1")
-
     if not api_key:
-        raise ValueError(
-            "API key not found in environment variables. Set OPENAI_API_KEY_NOT_PROXY."
-        )
+        raise ValueError("OPENAI_API_KEY_NOT_PROXY not set")
+
+    client = openai.AsyncOpenAI(api_key=api_key, base_url="https://api.openai.com/v1")
 
     if system_message:
         message_list = [{"role": "system", "content": system_message}] + message_list
+
     trial = 0
     while True:
         try:
-            response = client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=model,
                 messages=message_list,
                 temperature=temperature,
@@ -300,12 +258,9 @@ def request_openai(
             print("Bad Request Error", e)
             return ""
         except openai.RateLimitError as e:
-            exception_backoff = 2**trial  # exponential backoff
-            print(
-                f"Rate limit exception, retrying {trial} after {exception_backoff} sec",
-                e,
-            )
-            time.sleep(exception_backoff)
+            backoff = 2**trial
+            print(f"Rate limit, retrying {trial} after {backoff} sec", e)
+            await asyncio.sleep(backoff)
             trial += 1
         except Exception as e:
             print("Unexpected error", e)
@@ -392,44 +347,42 @@ def collect_stat(result_dir: str, model: str, apply_penalty: bool):
 
 
 if __name__ == "__main__":
-    arg = argparse.ArgumentParser()
+    import asyncio
 
-    arg.add_argument("--port", type=int, default=8283)
+    async def main():
+        arg = argparse.ArgumentParser()
+        arg.add_argument("--port", type=int, default=8283)
+        arg.add_argument("--delete_all_agents", action="store_true")
+        arg.add_argument("--search_agent_name_by_id", type=str)
+        arg.add_argument("--get_results_for_model", type=str)
+        arg.add_argument("--result_dir", type=str)
+        arg.add_argument("--benchmark_name", type=str)
 
-    arg.add_argument("--delete_all_agents", action="store_true")
+        args = arg.parse_args()
 
-    arg.add_argument("--search_agent_name_by_id", type=str)
+        client = AsyncLetta(base_url=f"http://localhost:{args.port}")
 
-    arg.add_argument("--get_results_for_model", type=str)
-    arg.add_argument("--result_dir", type=str)
-    arg.add_argument("--benchmark_name", type=str)
+        if args.delete_all_agents:
+            agents = await client.agents.list(limit=5000)
+            for agent in agents:
+                await client.agents.delete(agent.id)
 
-    args = arg.parse_args()
+        if args.search_agent_name_by_id:
+            agent_id = args.search_agent_name_by_id
+            agent_state = await client.agents.retrieve(agent_id)
+            print(agent_state.name)
 
-    if args.delete_all_agents:
-        port = args.port
-        client = Letta(base_url=f"http://localhost:{port}")
-        agents = client.agents.list(limit=5000)
-        for agent in agents:
-            client.agents.delete(agent.id)
+        if args.get_results_for_model:
+            model = args.get_results_for_model
+            result_dir = args.result_dir
+            (
+                model,
+                mean_score,
+                min_score,
+                max_score,
+                total_input_tokens,
+                total_output_tokens,
+            ) = collect_stat(result_dir, model, True)
+            print(f"{model},{round(mean_score, 2)},{total_input_tokens},{total_output_tokens}")
 
-    if args.search_agent_name_by_id:
-        agent_id = args.search_agent_name_by_id
-        client = Letta(base_url=f"http://localhost:8283")
-        agent_state = client.agents.retrieve(agent_id)
-        print(agent_state.name)
-
-    if args.get_results_for_model:
-        model = args.get_results_for_model
-        result_dir = args.result_dir
-        (
-            model,
-            mean_score,
-            min_score,
-            max_score,
-            total_input_tokens,
-            total_output_tokens,
-        ) = collect_stat(result_dir, model, True)
-        print(
-            f"{model},{round(mean_score, 2)},{total_input_tokens},{total_output_tokens}"
-        )
+    asyncio.run(main())

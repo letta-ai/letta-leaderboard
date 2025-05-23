@@ -1,22 +1,20 @@
 from abc import abstractmethod, ABCMeta
 from typing import Literal
-from letta_client import Letta, LettaResponse, MessageCreate
-
+from letta_client import AsyncLetta, LettaResponse, MessageCreate
 
 from leaderboard.utils import Dotdict, EvaluationResult, UsageStatistics
 
 
 class Benchmark(metaclass=ABCMeta):
-    dataset: list[Dotdict]  # TODO(shangyin): change to a more specific type
-    benchmark_type: Literal["general", "feature"]  # need a way to specify feature
+    dataset: list[Dotdict]
+    benchmark_type: Literal["general", "feature"]
 
     @abstractmethod
-    def setup_agent(self, datum: Dotdict, client: Letta, agent_id: str) -> None:
-        # this prepares the agent for the current evaluation, e.g. evaluating archival memory requires inserting the context into the agent's memory
+    async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str) -> None:
         pass
 
     @abstractmethod
-    def metric(
+    async def metric(
         self, predicted_answer: str, true_answer: str, datum: Dotdict, agent_id=None
     ) -> float:
         pass
@@ -29,13 +27,13 @@ class Benchmark(metaclass=ABCMeta):
         print(f"Benchmark type: {self.benchmark_type}")
         print(f"Example data point: {self.dataset[0]}")
 
-    def get_response(
+    async def get_response(
         self,
-        client: Letta,
+        client: AsyncLetta,
         agent_id: str,
         datum: Dotdict,
     ) -> LettaResponse:
-        return client.agents.messages.create(
+        return await client.agents.messages.create(
             agent_id=agent_id,
             messages=[
                 MessageCreate(
@@ -45,30 +43,27 @@ class Benchmark(metaclass=ABCMeta):
             ],
         )
 
-    def get_response_from_message_list(
+    async def get_response_from_message_list(
         self,
-        client: Letta,
+        client: AsyncLetta,
         agent_id: str,
         datum: Dotdict,
     ) -> list[LettaResponse]:
         responses = []
         for message in datum.message_list:
-            responses.append(
-                client.agents.messages.create(
-                    agent_id=agent_id,
-                    messages=[
-                        MessageCreate(
-                            role="user",
-                            content=message,
-                        )
-                    ],
-                )
+            response = await client.agents.messages.create(
+                agent_id=agent_id,
+                messages=[
+                    MessageCreate(
+                        role="user",
+                        content=message,
+                    )
+                ],
             )
-
+            responses.append(response)
         return responses
 
-    def get_usage_statistics(
-        self, client: Letta, agent_id: str, evaluation_result: EvaluationResult
+    async def get_usage_statistics(
+        self, client: AsyncLetta, agent_id: str, evaluation_result: EvaluationResult
     ) -> UsageStatistics:
-        # empty
         return UsageStatistics({}, {})

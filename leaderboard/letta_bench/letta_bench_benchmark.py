@@ -2,7 +2,7 @@ from typing import List, Dict
 
 from letta_client import (
     CreateBlock,
-    Letta,
+    AsyncLetta,
     LettaMessageUnion,
     LettaResponse,
     MessageCreate,
@@ -33,11 +33,6 @@ obvious_facts = [
 
 
 class LettaBenchmark(Benchmark):
-    """
-    Base class: loads dataset and provides default pipeline hooks.
-    Subclasses should override setup_agent, create_agent_fun, get_response, and get_usage_statistics.
-    """
-
     def __init__(self):
         raw = load_dataset(
             "json",
@@ -89,52 +84,45 @@ class LettaBenchmark(Benchmark):
 
         return data
 
-    def setup_agent(self, datum: Dotdict, client: Letta, agent_id: str):
-        # default: no special setup
+    async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str):
         pass
 
-    def create_agent_fun(
+    async def create_agent_fun(
         self,
-        client: Letta,
+        client: AsyncLetta,
         datum: Dotdict,
         llm_config,
         embedding_config,
     ) -> str:
-        # default: create agent without initial memory
-        return client.agents.create(
+        return (await client.agents.create(
             llm_config=llm_config, embedding_config=embedding_config
-        ).id
+        )).id
 
-    def get_response(
-        self, client: Letta, agent_id: str, datum: Dotdict
+    async def get_response(
+        self, client: AsyncLetta, agent_id: str, datum: Dotdict
     ) -> LettaResponse:
-        return super().get_response(client, agent_id, datum)
+        return await super().get_response(client, agent_id, datum)
 
-    def metric(self, predicted: str, true: str, datum: Dotdict, agent_id: str) -> float:
-        # default scoring via grade_sample
-        result = grade_sample(datum.message, true, predicted)
+    async def metric(self, predicted: str, true: str, datum: Dotdict, agent_id: str) -> float:
+        result = await grade_sample(datum.message, true, predicted)
         return 1.0 if result == "A" else 0.0
 
 
 class ArchivalMemoryReadBenchmark(LettaBenchmark):
-    """
-    Agents preload both provided supporting facts and a set of obvious facts into archival memory.
-    """
-
-    def setup_agent(self, datum: Dotdict, client: Letta, agent_id: str):
+    async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str):
         for fact in datum.supporting_fact:
-            client.agents.passages.create(agent_id=agent_id, text=fact)
+            await client.agents.passages.create(agent_id=agent_id, text=fact)
         for fact in obvious_facts:
-            client.agents.passages.create(agent_id=agent_id, text=fact)
+            await client.agents.passages.create(agent_id=agent_id, text=fact)
 
-    def get_usage_statistics(
+    async def get_usage_statistics(
         self,
-        client: Letta,
+        client: AsyncLetta,
         agent_ids: List[str],
         evaluation_result: EvaluationResult,
     ) -> UsageStatistics:
         return UsageStatistics(
-            total_archival_usage(
+            await total_archival_usage(
                 client, agent_ids, evaluation_result.individual_scores
             ),
             {},
@@ -142,11 +130,6 @@ class ArchivalMemoryReadBenchmark(LettaBenchmark):
 
 
 class CoreMemoryReadBenchmark(LettaBenchmark):
-    """
-    Agents created with a core memory block of supporting facts. Supports a "hard" mode where a few trick questions
-    precede the real query in message_list to test memory recall under noise.
-    """
-
     def __init__(self, hard: bool = False):
         self.hard = hard
         super().__init__()
@@ -188,9 +171,9 @@ class CoreMemoryReadBenchmark(LettaBenchmark):
 
         return data
 
-    def create_agent_fun(
+    async def create_agent_fun(
         self,
-        client: Letta,
+        client: AsyncLetta,
         datum: Dotdict,
         llm_config,
         embedding_config,
@@ -199,34 +182,29 @@ class CoreMemoryReadBenchmark(LettaBenchmark):
             label="Supporting Facts",
             value="\n".join(f"{i}. {f}" for i, f in enumerate(datum.supporting_fact)),
         )
-        agent = client.agents.create(
+        agent = await client.agents.create(
             llm_config=llm_config,
             embedding_config=embedding_config,
             memory_blocks=[block],
         )
         return agent.id
 
-    def get_response(
-        self, client: Letta, agent_id: str, datum: Dotdict
+    async def get_response(
+        self, client: AsyncLetta, agent_id: str, datum: Dotdict
     ) -> LettaResponse:
         if self.hard:
-            return super().get_response_from_message_list(client, agent_id, datum)[-1]
-        return super().get_response(client, agent_id, datum)
+            return (await super().get_response_from_message_list(client, agent_id, datum))[-1]
+        return await super().get_response(client, agent_id, datum)
 
 
 class CoreMemoryWriteBenchmark(LettaBenchmark):
-    """
-    Agents start with persona instructions and empty person-specific blocks, then write core memory entries
-    based on observed facts. Supports a "hard" mode where persona instructions are omitted.
-    """
-
     def __init__(self, hard: bool = False):
         self.hard = hard
         super().__init__()
 
-    def create_agent_fun(
+    async def create_agent_fun(
         self,
-        client: Letta,
+        client: AsyncLetta,
         datum: Dotdict,
         llm_config,
         embedding_config,
@@ -243,7 +221,7 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
                 )
             ]
         person_blocks = [CreateBlock(label=n, value="") for n in names]
-        state = client.agents.create(
+        state = await client.agents.create(
             llm_config=llm_config,
             embedding_config=embedding_config,
             memory_blocks=persona + person_blocks,
@@ -251,24 +229,24 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
         agent_id = state.id
         self.agent_datum_mapping[agent_id] = datum
         for idx in datum.supporting_fact_indices:
-            client.agents.messages.create(
+            await client.agents.messages.create(
                 agent_id=agent_id,
                 messages=[
                     MessageCreate(role="user", content=datum.supporting_fact[idx])
                 ],
             )
-        self.agent_core_memory_messages[agent_id] = client.agents.messages.list(
+        self.agent_core_memory_messages[agent_id] = await client.agents.messages.list(
             agent_id=agent_id, limit=1000
         )
-        client.agents.messages.reset(agent_id=agent_id)
+        await client.agents.messages.reset(agent_id=agent_id)
         return agent_id
 
-    def get_usage_statistics(
+    async def get_usage_statistics(
         self,
-        client: Letta,
+        client: AsyncLetta,
         agent_ids: List[str],
         evaluation_result: EvaluationResult,
-    ) -> dict:
+    ) -> UsageStatistics:
         return UsageStatistics(
             {},
             {
@@ -284,19 +262,17 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
 class CoreMemoryUpdateBenchmark(LettaBenchmark):
     def __init__(self):
         super().__init__()
-
         self.agent_core_memory_update_messages = {}
 
     def _build_dataset(self):
         dataset = super()._build_dataset()
         for datum in dataset:
-            # now the correct answer is the contradicting answer!!
             datum.answer = datum.contradicting_answer
         return dataset
 
-    def create_agent_fun(
+    async def create_agent_fun(
         self,
-        client: Letta,
+        client: AsyncLetta,
         datum: Dotdict,
         llm_config,
         embedding_config,
@@ -305,32 +281,29 @@ class CoreMemoryUpdateBenchmark(LettaBenchmark):
             label="Supporting Facts",
             value="\n".join(f"{i}. {f}" for i, f in enumerate(datum.supporting_fact)),
         )
-        agent = client.agents.create(
+        agent = await client.agents.create(
             llm_config=llm_config,
             embedding_config=embedding_config,
             memory_blocks=[block],
         )
         return agent.id
 
-    def setup_agent(self, datum, client, agent_id):
-        # we need to update the agent with datum.contradicting_facts
-        # datum.
-        # client.agents.messages.create
-        client.agents.messages.create(
+    async def setup_agent(self, datum, client, agent_id):
+        await client.agents.messages.create(
             agent_id=agent_id,
             messages=[MessageCreate(role="user", content=datum.contradicting_fact)],
         )
-        self.agent_core_memory_update_messages[agent_id] = client.agents.messages.list(
+        self.agent_core_memory_update_messages[agent_id] = await client.agents.messages.list(
             agent_id=agent_id, limit=1000
         )
-        client.agents.messages.reset(agent_id=agent_id)
-        
-    def get_usage_statistics(
+        await client.agents.messages.reset(agent_id=agent_id)
+
+    async def get_usage_statistics(
         self,
-        client: Letta,
+        client: AsyncLetta,
         agent_ids: List[str],
         evaluation_result: EvaluationResult,
-    ) -> dict:
+    ) -> UsageStatistics:
         return UsageStatistics(
             {},
             {
@@ -340,7 +313,7 @@ class CoreMemoryUpdateBenchmark(LettaBenchmark):
                 for agent_id, messages in self.agent_core_memory_update_messages.items()
                 if agent_id in agent_ids
             },
-        ) 
+        )
 
 
 # Final benchmark instances (names preserved)

@@ -6,3 +6,5 @@ results/
 *.png
 
 results*
+
+.idea
