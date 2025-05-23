@@ -18,7 +18,7 @@ class Benchmark(metaclass=ABCMeta):
 
     @abstractmethod
     async def metric(
-        self, predicted_answer: str, true_answer: str, datum: Dotdict, agent_id=None
+        self, predicted: str, true: str, datum: Dotdict, agent_id: str
     ) -> float:
         pass
 

@@ -98,6 +98,7 @@ async def evaluate_concurrent(
     client: AsyncLetta,
     create_agent_fun: Callable[[AsyncLetta, Any], asyncio.Future],
     timeout: int = 60,
+    max_concurrency: int = 16,
 ):
     total = len(benchmark.dataset)
     progress_bar = tqdm(total=total, desc=f"Score: 0/{total}")
@@ -141,7 +142,13 @@ async def evaluate_concurrent(
                 if attempt == MAX_RETRIES - 1:
                     raise
 
-    tasks = [asyncio.create_task(process_with_retry(d)) for d in benchmark.dataset]
+    semaphore = asyncio.Semaphore(max_concurrency)
+
+    async def process_with_semaphore(datum: Any):
+        async with semaphore:
+            return await process_with_retry(datum)
+
+    tasks = [asyncio.create_task(process_with_semaphore(d)) for d in benchmark.dataset]
 
     for task in asyncio.as_completed(tasks):
         try:
@@ -196,12 +203,6 @@ async def main():
         help="Model to use",
     )
     parser.add_argument(
-        "--num_threads",
-        type=int,
-        default=16,
-        help="Concurrency for evaluation",
-    )
-    parser.add_argument(
         "--output_file",
         type=str,
         default="",
@@ -249,6 +250,12 @@ async def main():
         default="http://localhost:8283",
         help="Base URL for Letta server",
     )
+    parser.add_argument(
+        "--max_concurrency",
+        type=int,
+        default=16,
+        help="Maximum number of concurrent evaluation tasks",
+    )
     args = parser.parse_args()
 
     client_settings = {"base_url": args.letta_server}
@@ -288,8 +295,8 @@ async def main():
             benchmark,
             client,
             create_base_agent_fun,
-            # num_thread=args.num_threads,
             timeout=args.timeout,
+            max_concurrency=args.max_concurrency,
         )
         out_dir = (
             f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}"
