@@ -7,13 +7,14 @@ if [ "$#" -lt 1 ]; then
 fi
 
 all_benchmarks=(
-    "archival_memory_read_benchmark"
     "core_memory_write_benchmark_hard"
     "core_memory_read_benchmark"
+    "archival_memory_read_benchmark"
     "core_memory_update_benchmark"
 )
 
 dataset_size=100
+our_dir="results_$(date +%m%d)"
 
 for model in "$@"; do
     echo "Evaluating model: $model"
@@ -24,16 +25,24 @@ for model in "$@"; do
 
     for benchmark in "${all_benchmarks[@]}"; do
         echo "Running benchmark: $benchmark"
+        start_time=$(date +%s)
+
         python -m leaderboard.evaluate \
             --benchmark=letta_bench \
             --benchmark_variable="$benchmark" \
             --dataset_size="$dataset_size" \
             --timeout=300 \
             --repeat=3 \
-            --max_concurrency=16 \
-            --model="$model"
+            --max_concurrency=20 \
+            --model="$model" \
+            --out_dir="results_$(date +%m%d)"
 
-        result_dir="results/letta_bench_${benchmark}_${dataset_size}"
+        # elapsed=$(( $(date +%s) - start_time ))
+        # if [ $elapsed -lt 90 ]; then
+        #     sleep $((90 - elapsed))
+        # fi
+
+        result_dir="${our_dir}/letta_bench_${benchmark}_${dataset_size}"
         stats=$(python -m leaderboard.utils \
             --get_results_for_model "$model" \
             --result_dir "$result_dir")

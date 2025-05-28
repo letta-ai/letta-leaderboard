@@ -25,14 +25,12 @@ non_together_models=(
     "openai-gpt-4.1"
     "claude-3-7-sonnet"
     "claude-4-sonnet"
-    "claude-3-5-sonnet"
     "openai-gpt-4o"
     "openai-gpt-4.1-mini"
     "openai-o3-mini"
     "openai-o4-mini"
     "openai-gpt-4.1-nano"
     "openai-gpt-4o-mini"
-    "openai-gpt-3.5-turbo"
 )
 
 # Check if a base command is provided
