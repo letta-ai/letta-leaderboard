@@ -14,7 +14,7 @@ all_benchmarks=(
 )
 
 dataset_size=100
-our_dir="results_$(date +%m%d)"
+out_dir="results_$(date +%m%d)"
 
 for model in "$@"; do
     echo "Evaluating model: $model"
@@ -27,22 +27,17 @@ for model in "$@"; do
         echo "Running benchmark: $benchmark"
         start_time=$(date +%s)
 
-        python -m leaderboard.evaluate \
+        ( set -x; python -m leaderboard.evaluate \
             --benchmark=letta_bench \
             --benchmark_variable="$benchmark" \
             --dataset_size="$dataset_size" \
             --timeout=300 \
             --repeat=3 \
-            --max_concurrency=20 \
+            --max_concurrency=100 \
             --model="$model" \
-            --out_dir="results_$(date +%m%d)"
+            --out_dir="$out_dir") # max_concurrency needs to be lower if ratelimit is low on LLM api key
 
-        # elapsed=$(( $(date +%s) - start_time ))
-        # if [ $elapsed -lt 90 ]; then
-        #     sleep $((90 - elapsed))
-        # fi
-
-        result_dir="${our_dir}/letta_bench_${benchmark}_${dataset_size}"
+        result_dir="${out_dir}/letta_bench_${benchmark}_${dataset_size}"
         stats=$(python -m leaderboard.utils \
             --get_results_for_model "$model" \
             --result_dir "$result_dir")

@@ -25,17 +25,10 @@ all_models=(
     # "claude-3-7-sonnet-extended" isn't working now, investigating
 )
 
-# Check if a base command is provided
-if [ -z "$1" ]; then
-  echo "Error: No base command provided."
-  echo "Usage: ./run_all_models.sh \"<base_command>\""
-  exit 1
-fi
 
-base_command="$1"
-
+base_command="bash ./run_all_benchmark.sh"
 
 for model in "${all_models[@]}"; do
   echo "Running model: $model"
-  eval "$base_command --model=$model"
+  eval "$base_command $model"
 done
