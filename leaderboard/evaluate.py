@@ -110,7 +110,7 @@ async def evaluate_concurrent(
     total_score = 0
     history: dict[str, tuple[str, list, list]] = {}
 
-    MAX_RETRIES = 5
+    MAX_RETRIES = 3
 
     async def process_datum(datum: Any):
         agent_id = await create_agent_fun(client, datum)
@@ -170,7 +170,7 @@ async def evaluate_concurrent(
         except Exception as e:
             now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print(f"[red]Error in task: {e} at {now}[/red]")
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             continue
 
         progress_bar.update(1)
@@ -256,6 +256,12 @@ async def main():
         default=16,
         help="Maximum number of concurrent evaluation tasks",
     )
+    parser.add_argument(
+        "--out_dir",
+        type=str,
+        default="results",
+        help="Result output parent directory name",
+    )
     args = parser.parse_args()
 
     client_settings = {"base_url": args.letta_server}
@@ -299,7 +305,7 @@ async def main():
             max_concurrency=args.max_concurrency,
         )
         out_dir = (
-            f"results/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}"
+            f"{args.out_dir}/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}"
         )
         os.makedirs(out_dir, exist_ok=True)
         base = (

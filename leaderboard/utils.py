@@ -324,21 +324,29 @@ def collect_stat(result_dir: str, model: str, apply_penalty: bool):
 
                 this_score = 1
 
-                if "core_memory" in result_dir:
-                    for message in agent_messages.get("output", []):
+                if "core_memory_read" in result_dir:
+                    for message in agent_messages["output"]:
+                        if message.get("message_type") == "tool_call_message":
+                            this_score = 0
+                            break
+                if "core_memory_write" in result_dir:
+                    for message in agent_messages["output"]:
+                        if message.get("message_type") == "tool_call_message":
+                            if message.get("tool_call").get("name") not in ["archival_memory_search", "conversation_search"]:
+                                this_score = 0
+                                break
+                if "core_memory_update" in result_dir:
+                    for message in agent_messages["output"]:
                         if message.get("message_type") == "tool_call_message":
                             this_score = 0
                             break
 
                 if "archival" in result_dir:
                     any_archival_search = False
-                    for message in agent_messages.get("output", []):
+                    for message in agent_messages["output"]:
                         if message.get("message_type") == "tool_call_message":
                             tool = message.get("tool_call", {}).get("name")
-                            if tool not in [
-                                "archival_memory_search",
-                                "conversation_search",
-                            ]:
+                            if tool not in ["archival_memory_search", "conversation_search"]:
                                 this_score = 0
                             if tool == "archival_memory_search":
                                 any_archival_search = True
