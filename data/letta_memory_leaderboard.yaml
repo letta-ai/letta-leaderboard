@@ -138,10 +138,4 @@
   letta_bench_core_memory_read_benchmark_100: 90.33
   letta_bench_core_memory_update_benchmark_100: 43.33
   letta_bench_core_memory_write_benchmark_hard_100: 48.67
-- model: together-qwen-3-235b
-  average: 0.42
-  total_cost: 0.01
-  letta_bench_archival_memory_read_benchmark_100: 0.0
-  letta_bench_core_memory_read_benchmark_100: 1.67
-  letta_bench_core_memory_update_benchmark_100: 0.0
-  letta_bench_core_memory_write_benchmark_hard_100: 0.0
+
