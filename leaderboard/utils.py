@@ -254,9 +254,9 @@ async def request_openai(
     max_tokens: int = 2048,
     system_message: str = "You are a helpful assistant.",
 ) -> str:
-    api_key = os.getenv("OPENAI_API_KEY_NOT_PROXY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise ValueError("OPENAI_API_KEY_NOT_PROXY not set")
+        raise ValueError("OPENAI_API_KEY not set")
 
     client = openai.AsyncOpenAI(api_key=api_key, base_url="https://api.openai.com/v1")
 
