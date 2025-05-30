@@ -33,13 +33,6 @@
   letta_bench_core_memory_read_benchmark_100: 100.0
   letta_bench_core_memory_update_benchmark_100: 66.0
   letta_bench_core_memory_write_benchmark_hard_100: 99.0
-- model: together-llama-4-scout-17b
-  average: 43.08
-  total_cost: 0.94
-  letta_bench_archival_memory_read_benchmark_100: 96.67
-  letta_bench_core_memory_read_benchmark_100: 8.0
-  letta_bench_core_memory_update_benchmark_100: 21.67
-  letta_bench_core_memory_write_benchmark_hard_100: 46.0
 - model: openai-gpt-4.1-nano
   average: 47.75
   total_cost: 0.97
@@ -82,6 +75,27 @@
   letta_bench_core_memory_read_benchmark_100: 100.0
   letta_bench_core_memory_update_benchmark_100: 83.67
   letta_bench_core_memory_write_benchmark_hard_100: 100.0
+- model: together-llama-4-scout-17b
+  average: 47.0
+  total_cost: 1.42
+  letta_bench_archival_memory_read_benchmark_100: 64.33
+  letta_bench_core_memory_read_benchmark_100: 31.33
+  letta_bench_core_memory_update_benchmark_100: 13.67
+  letta_bench_core_memory_write_benchmark_hard_100: 78.67
+- model: together-qwen-3-235b
+  average: 62.08
+  total_cost: 1.08
+  letta_bench_archival_memory_read_benchmark_100: 52.33
+  letta_bench_core_memory_read_benchmark_100: 96.0
+  letta_bench_core_memory_update_benchmark_100: 43.33
+  letta_bench_core_memory_write_benchmark_hard_100: 56.67
+- model: together-llama-4-maverick-17b
+  average: 61.25
+  total_cost: 1.57
+  letta_bench_archival_memory_read_benchmark_100: 49.33
+  letta_bench_core_memory_read_benchmark_100: 92.33
+  letta_bench_core_memory_update_benchmark_100: 46.67
+  letta_bench_core_memory_write_benchmark_hard_100: 56.67
 - model: claude-3-7-sonnet
   average: 78.58
   total_cost: 17.69
@@ -89,13 +103,6 @@
   letta_bench_core_memory_read_benchmark_100: 99.0
   letta_bench_core_memory_update_benchmark_100: 76.33
   letta_bench_core_memory_write_benchmark_hard_100: 92.0
-- model: together-llama-4-maverick-17b
-  average: 18.0
-  total_cost: 2.24
-  letta_bench_archival_memory_read_benchmark_100: 29.67
-  letta_bench_core_memory_read_benchmark_100: 35.0
-  letta_bench_core_memory_update_benchmark_100: 4.33
-  letta_bench_core_memory_write_benchmark_hard_100: 3.0
 - model: together-llama-3-2-3b
   average: 3.67
   total_cost: 0.43
@@ -124,6 +131,13 @@
   letta_bench_core_memory_read_benchmark_100: 5.67
   letta_bench_core_memory_update_benchmark_100: 1.33
   letta_bench_core_memory_write_benchmark_hard_100: 10.33
+- model: together-deepseek-v3
+  average: 54.08
+  total_cost: 3.42
+  letta_bench_archival_memory_read_benchmark_100: 4.67
+  letta_bench_core_memory_read_benchmark_100: 97.33
+  letta_bench_core_memory_update_benchmark_100: 50.33
+  letta_bench_core_memory_write_benchmark_hard_100: 64.0
 - model: openai-o3-mini
   average: 43.92
   total_cost: 4.89
@@ -131,11 +145,3 @@
   letta_bench_core_memory_read_benchmark_100: 100.0
   letta_bench_core_memory_update_benchmark_100: 16.67
   letta_bench_core_memory_write_benchmark_hard_100: 54.67
-- model: together-deepseek-v3
-  average: 46.58
-  total_cost: 3.74
-  letta_bench_archival_memory_read_benchmark_100: 4.0
-  letta_bench_core_memory_read_benchmark_100: 90.33
-  letta_bench_core_memory_update_benchmark_100: 43.33
-  letta_bench_core_memory_write_benchmark_hard_100: 48.67
-
