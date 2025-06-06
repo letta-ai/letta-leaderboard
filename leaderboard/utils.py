@@ -285,7 +285,6 @@ async def request_openai(
             print("Unexpected error", e)
             return ""
 
-
 def collect_stat(result_dir: str, model: str, apply_penalty: bool):
     scores = []
     total_input_tokens = 0
@@ -373,6 +372,54 @@ def collect_stat(result_dir: str, model: str, apply_penalty: bool):
     )
 
 
+def collect_stats(parent_dir: str, model: str, apply_penalty: bool):
+    results = {}
+    total_input_tokens = 0
+    total_output_tokens = 0
+    
+    # Get all subdirectories that start with "letta_bench_"
+    subdirs = []
+    for item in os.listdir(parent_dir):
+        item_path = os.path.join(parent_dir, item)
+        if os.path.isdir(item_path) and item.startswith("letta_bench_"):
+            subdirs.append(item)
+    
+    # Process each subdirectory
+    for subdir in subdirs:
+        result_dir = os.path.join(parent_dir, subdir)
+        (
+            returned_model,
+            mean_score,
+            min_score,
+            max_score,
+            input_tokens,
+            output_tokens,
+        ) = collect_stat(result_dir, model, apply_penalty)
+        
+        # Remove "letta_bench_" prefix from directory name
+        benchmark_name = subdir.replace("letta_bench_", "")
+        results[benchmark_name] = mean_score
+        total_input_tokens += input_tokens
+        total_output_tokens += output_tokens
+    
+    # Calculate average score
+    if results:
+        average_score = sum(results.values()) / len(results)
+    else:
+        average_score = 0
+    
+    # Print results in the requested format
+    print(f"  average: {average_score:.2f}")
+    print(f"  total_input_tokens: {total_input_tokens}")
+    print(f"  total_output_tokens: {total_output_tokens}")
+    
+    # Print individual benchmark scores
+    for benchmark_name, score in sorted(results.items()):
+        print(f"  {benchmark_name}: {score:.2f}")
+    
+    return results, average_score, total_input_tokens, total_output_tokens
+
+
 if __name__ == "__main__":
     import asyncio
 
@@ -382,6 +429,7 @@ if __name__ == "__main__":
         arg.add_argument("--delete_all_agents", action="store_true")
         arg.add_argument("--search_agent_name_by_id", type=str)
         arg.add_argument("--get_results_for_model", type=str)
+        arg.add_argument("--get_benchmark_results_for_model", type=str)
         arg.add_argument("--result_dir", type=str)
         arg.add_argument("--benchmark_name", type=str)
 
@@ -401,6 +449,11 @@ if __name__ == "__main__":
 
         if args.get_results_for_model:
             model = args.get_results_for_model
+            parent_dir = args.result_dir
+            collect_stats(parent_dir, model, True)
+
+        if args.get_benchmark_results_for_model:
+            model = args.get_benchmark_results_for_model
             result_dir = args.result_dir
             (
                 model,
