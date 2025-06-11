@@ -381,51 +381,89 @@ def collect_stat(result_dir: str, model: str, apply_penalty: bool):
 
 
 def collect_stats(parent_dir: str, model: str, apply_penalty: bool):
-    results = {}
-    total_input_tokens = 0
-    total_output_tokens = 0
+    separator = "=" * 50
+    print(f"{separator}")
+    print(f"=== Results for {model} ===")
+    print(f"{separator}")
     
-    # Get all subdirectories that start with "letta_bench_"
-    subdirs = []
-    for item in os.listdir(parent_dir):
-        item_path = os.path.join(parent_dir, item)
-        if os.path.isdir(item_path) and item.startswith("letta_bench_"):
-            subdirs.append(item)
-    
-    # Process each subdirectory
-    for subdir in subdirs:
-        result_dir = os.path.join(parent_dir, subdir)
-        (
-            returned_model,
-            mean_score,
-            min_score,
-            max_score,
-            input_tokens,
-            output_tokens,
-        ) = collect_stat(result_dir, model, apply_penalty)
+    # Helper function to collect and format results
+    def collect_and_format(apply_penalty_flag: bool, section_name: str):
+        results = {}
+        total_input_tokens = 0
+        total_output_tokens = 0
         
-        # Remove "letta_bench_" prefix from directory name
-        benchmark_name = subdir.replace("letta_bench_", "")
-        results[benchmark_name] = mean_score
-        total_input_tokens += input_tokens
-        total_output_tokens += output_tokens
+        # Get all subdirectories that start with "letta_bench_"
+        subdirs = []
+        for item in os.listdir(parent_dir):
+            item_path = os.path.join(parent_dir, item)
+            if os.path.isdir(item_path) and item.startswith("letta_bench_"):
+                subdirs.append(item)
+        
+        # Process each subdirectory
+        for subdir in subdirs:
+            result_dir = os.path.join(parent_dir, subdir)
+            (
+                returned_model,
+                mean_score,
+                min_score,
+                max_score,
+                input_tokens,
+                output_tokens,
+            ) = collect_stat(result_dir, model, apply_penalty_flag)
+            
+            # Remove "letta_bench_" prefix and dataset size suffix from directory name
+            benchmark_name = subdir.replace("letta_bench_", "")
+            # Remove dataset size suffix (e.g., "_100", "_50", etc.)
+            benchmark_name = re.sub(r"_\d+$", "", benchmark_name)
+            results[benchmark_name] = mean_score
+            total_input_tokens += input_tokens
+            total_output_tokens += output_tokens
+        
+        # Calculate average score
+        if results:
+            average_score = sum(results.values()) / len(results)
+        else:
+            average_score = 0
+        
+        # Print results in the requested format
+        print(f"\n--- {section_name} ---")
+        print(f"  average: {average_score:.2f}")
+        print(f"  total_input_tokens: {total_input_tokens}")
+        print(f"  total_output_tokens: {total_output_tokens}")
+        
+        # Print individual benchmark scores
+        for benchmark_name, score in sorted(results.items()):
+            print(f"  {benchmark_name}: {score:.2f}")
+        
+        return results, average_score, total_input_tokens, total_output_tokens
     
-    # Calculate average score
-    if results:
-        average_score = sum(results.values()) / len(results)
-    else:
-        average_score = 0
+    # Collect results with penalty applied
+    results_with_penalty, avg_with_penalty, tokens_in_with_penalty, tokens_out_with_penalty = collect_and_format(
+        True, "With Penalty Applied"
+    )
     
-    # Print results in the requested format
-    print(f"  average: {average_score:.2f}")
-    print(f"  total_input_tokens: {total_input_tokens}")
-    print(f"  total_output_tokens: {total_output_tokens}")
+    # Collect results without penalty applied
+    results_without_penalty, avg_without_penalty, tokens_in_without_penalty, tokens_out_without_penalty = collect_and_format(
+        False, "Without Penalty Applied"
+    )
     
-    # Print individual benchmark scores
-    for benchmark_name, score in sorted(results.items()):
-        print(f"  {benchmark_name}: {score:.2f}")
+    print(f"\n{separator}")
     
-    return results, average_score, total_input_tokens, total_output_tokens
+    # Return both sets of results
+    return {
+        "with_penalty": {
+            "results": results_with_penalty,
+            "average": avg_with_penalty,
+            "input_tokens": tokens_in_with_penalty,
+            "output_tokens": tokens_out_with_penalty,
+        },
+        "without_penalty": {
+            "results": results_without_penalty,
+            "average": avg_without_penalty,
+            "input_tokens": tokens_in_without_penalty,
+            "output_tokens": tokens_out_without_penalty,
+        }
+    }
 
 
 if __name__ == "__main__":
