@@ -5,10 +5,11 @@ from letta_client import AsyncLetta, LlmConfig, EmbeddingConfig
 async def create_base_agent(
     client: AsyncLetta,
     datum: Any,
-    llm_config: LlmConfig,
-    embedding_config: EmbeddingConfig,
+    agent_config: dict,
 ) -> str:
-    agent = await client.agents.create(
-        llm_config=llm_config, embedding_config=embedding_config
-    )
+    # Ensure agent_config contains required keys
+    assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+    assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+    
+    agent = await client.agents.create(**agent_config)
     return agent.id

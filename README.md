@@ -64,7 +64,7 @@ class Benchmark(metaclass=ABCMeta):
     
     # IMPORTANT: creates custom agents to start with the evaluation
     # if not defined, the evaluator will create a default agent
-    async def create_agent_fun(self, client: Letta, datum, llm_config, embedding_config):
+    async def create_agent_fun(self, client: Letta, datum, agent_config):
         pass
 ```
 

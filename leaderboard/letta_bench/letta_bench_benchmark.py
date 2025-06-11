@@ -91,13 +91,14 @@ class LettaBenchmark(Benchmark):
         self,
         client: AsyncLetta,
         datum: Dotdict,
-        llm_config,
-        embedding_config,
+        agent_config: dict,
     ) -> str:
+        # Ensure agent_config contains required keys
+        assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+        assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+        
         return (
-            await client.agents.create(
-                llm_config=llm_config, embedding_config=embedding_config
-            )
+            await client.agents.create(**agent_config)
         ).id
 
     async def get_response(
@@ -179,17 +180,19 @@ class CoreMemoryReadBenchmark(LettaBenchmark):
         self,
         client: AsyncLetta,
         datum: Dotdict,
-        llm_config,
-        embedding_config,
+        agent_config: dict,
     ) -> str:
+        # Ensure agent_config contains required keys
+        assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+        assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+        
         block = CreateBlock(
             label="Supporting Facts",
             value="\n".join(f"{i}. {f}" for i, f in enumerate(datum.supporting_fact)),
         )
         agent = await client.agents.create(
-            llm_config=llm_config,
-            embedding_config=embedding_config,
             memory_blocks=[block],
+            **agent_config,
         )
         return agent.id
 
@@ -212,9 +215,12 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
         self,
         client: AsyncLetta,
         datum: Dotdict,
-        llm_config,
-        embedding_config,
+        agent_config: dict,
     ) -> str:
+        # Ensure agent_config contains required keys
+        assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+        assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+        
         names = [n for n in datum.name if n.lower() in datum.message.lower()]
         persona = []
         if not self.hard:
@@ -228,9 +234,8 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
             ]
         person_blocks = [CreateBlock(label=n, value="") for n in names]
         state = await client.agents.create(
-            llm_config=llm_config,
-            embedding_config=embedding_config,
             memory_blocks=persona + person_blocks,
+            **agent_config,
         )
         agent_id = state.id
         self.agent_datum_mapping[agent_id] = datum
@@ -280,17 +285,19 @@ class CoreMemoryUpdateBenchmark(LettaBenchmark):
         self,
         client: AsyncLetta,
         datum: Dotdict,
-        llm_config,
-        embedding_config,
+        agent_config: dict,
     ) -> str:
+        # Ensure agent_config contains required keys
+        assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+        assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+        
         block = CreateBlock(
             label="Supporting Facts",
             value="\n".join(f"{i}. {f}" for i, f in enumerate(datum.supporting_fact)),
         )
         agent = await client.agents.create(
-            llm_config=llm_config,
-            embedding_config=embedding_config,
             memory_blocks=[block],
+            **agent_config,
         )
         return agent.id
 
