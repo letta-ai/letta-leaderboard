@@ -279,8 +279,7 @@ class LoCoMoQABenchmark(Benchmark):
         self,
         client: AsyncLetta,
         datum: Dotdict,
-        llm_config,
-        embedding_config,
+        agent_config: dict,
     ) -> str:
         """
         Create agent configured for LoCoMo Question Answering.
@@ -288,6 +287,10 @@ class LoCoMoQABenchmark(Benchmark):
         If this is the first agent for this sample_id, create template agent and send all conversation messages.
         For subsequent agents with the same sample_id, create fresh agents and copy template agent's message history.
         """
+        # Ensure agent_config contains required keys
+        assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+        assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+        
         print(f"Creating agent for sample {datum.sample_id}")
         
         # Initialize lock for this sample_id if not exists
@@ -313,9 +316,8 @@ class LoCoMoQABenchmark(Benchmark):
                 ]
                 
                 template_agent = await client.agents.create(
-                    llm_config=llm_config,
-                    embedding_config=embedding_config,
                     memory_blocks=memory_blocks,
+                    **agent_config,
                 )
 
                 print(f"Created template agent: {template_agent.id}")
@@ -403,9 +405,8 @@ class LoCoMoQABenchmark(Benchmark):
         
         # Create fresh agent
         agent = await client.agents.create(
-            llm_config=llm_config,
-            embedding_config=embedding_config,
             memory_blocks=memory_blocks,
+            **agent_config,
         )
         print(f"Created new agent: {agent.id}")
         
