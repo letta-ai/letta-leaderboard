@@ -170,7 +170,7 @@ async def evaluate_concurrent(
         except Exception as e:
             now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print(f"[red]Error in task: {e} at {now}[/red]")
-            # print(traceback.format_exc())
+            print(traceback.format_exc())
             continue
 
         progress_bar.update(1)
@@ -284,12 +284,25 @@ async def main():
         embedding_chunk_size=300,
     )
 
+    # Create agent_config dict containing llm_config and embedding_config
+    agent_config = {
+        "llm_config": llm_config,
+        "embedding_config": embedding_config,
+    }
+
+    # Verify agent_config contains required keys
+    assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+    assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+    assert agent_config["llm_config"] is not None, "llm_config cannot be None"
+    assert agent_config["embedding_config"] is not None, "embedding_config cannot be None"
+
     if getattr(benchmark, "create_agent_fun", None):
 
         def create_base_agent_fun(c, d):
-            return benchmark.create_agent_fun(c, d, llm_config, embedding_config)
+            return benchmark.create_agent_fun(c, d, agent_config)
     else:
-        create_base_agent_fun = create_base_agent
+        def create_base_agent_fun(c, d):
+            return create_base_agent(c, d, agent_config)
 
     benchmark.truncate_dataset(args.dataset_size)
 
