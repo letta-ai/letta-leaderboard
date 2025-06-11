@@ -237,10 +237,18 @@ CHOICE_STRINGS = ["CORRECT", "INCORRECT", "NOT_ATTEMPTED"]
 CHOICE_LETTER_TO_STRING = dict(zip(CHOICE_LETTERS, CHOICE_STRINGS))
 
 
-async def grade_sample(question: str, target: str, predicted_answer: str) -> str:
-    grader_prompt = GRADER_TEMPLATE.format(
-        question=question, target=target, predicted_answer=predicted_answer
-    )
+async def grade_sample(question: str, target: str, predicted_answer: str, custom_template: str = None) -> str:
+    if custom_template:
+        # Use custom template and format it with the provided values
+        grader_prompt = custom_template.format(
+            question=question, target=target, predicted_answer=predicted_answer
+        )
+    else:
+        # Use default grading template
+        grader_prompt = GRADER_TEMPLATE.format(
+            question=question, target=target, predicted_answer=predicted_answer
+        )
+    
     prompt_messages = [dict(content=grader_prompt, role="user")]
     grading_response = await request_openai(prompt_messages)
     match = re.search(r"(A|B|C)", grading_response)
