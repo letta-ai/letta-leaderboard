@@ -67,6 +67,13 @@ class Benchmark(metaclass=ABCMeta):
         return responses
 
     async def get_usage_statistics(
-        self, client: AsyncLetta, agent_id: str, evaluation_result: EvaluationResult
+        self, client: AsyncLetta, agent_ids: list[str], evaluation_result: EvaluationResult
     ) -> UsageStatistics:
-        return UsageStatistics({}, {})
+        return UsageStatistics({}, {agent_id: {} for agent_id in agent_ids})
+
+    # IMPORTANT: creates custom agents to start with the evaluation
+    # if not defined, the evaluator will create a default agent
+    # agent_config should contain llm_config, embedding_config and any other agent creation parameters
+    # Implementations should include assertions to validate required keys are present
+    # async def create_agent_fun(self, client: AsyncLetta, datum: Dotdict, agent_config: dict) -> str:
+    #     pass
