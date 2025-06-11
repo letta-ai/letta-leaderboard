@@ -51,9 +51,9 @@ class LoCoMoQABenchmark(Benchmark):
         self.chunking_strategy = chunking_strategy
         self.raw_data = self._load_dataset()
         self.agent_datum_mapping: Dict[str, Dotdict] = {}
-        self.template_agent_id: Optional[str] = None
-        self.template_agent_lock = asyncio.Lock()
-        self.template_message_ids: List[str] = []
+        self.template_agent_ids: Dict[str, str] = {}  # sample_id -> agent_id mapping
+        self.template_agent_locks: Dict[str, asyncio.Lock] = {}  # sample_id -> lock mapping
+        self.template_message_ids: Dict[str, List[str]] = {}  # sample_id -> message_ids mapping
         self.dataset = self._build_dataset()
         self.benchmark_type = "feature"
     
@@ -82,11 +82,20 @@ class LoCoMoQABenchmark(Benchmark):
             
             # Process each QA pair in the sample
             for qa_item in sample.get("qa", []):
+                # Handle different answer formats based on category
+                category = qa_item.get("category", "unknown")
+                if category == 5:
+                    # Adversarial questions use "adversarial_answer"
+                    answer = qa_item.get("adversarial_answer", "")
+                else:
+                    # Regular questions use "answer"
+                    answer = qa_item.get("answer", "")
+                
                 data.append(Dotdict({
                     "sample_id": sample["sample_id"],
                     "conversation_history": conversation_history,
                     "message": qa_item["question"],
-                    "answer": qa_item["answer"],
+                    "answer": answer,
                     "category": qa_item.get("category", "unknown"),
                     "evidence": qa_item.get("evidence", []),
                     "speakers": {
@@ -106,6 +115,10 @@ class LoCoMoQABenchmark(Benchmark):
         session_keys = sorted([k for k in conversation.keys() if k.startswith("session_")])
         
         for session_key in session_keys:
+            # Get session timestamp
+            session_timestamp_key = f"{session_key}_date_time"
+            session_timestamp = conversation.get(session_timestamp_key, "")
+            
             session_data = conversation[session_key]
             if isinstance(session_data, list):
                 for turn in session_data:
@@ -116,7 +129,7 @@ class LoCoMoQABenchmark(Benchmark):
                         "dia_id": turn.get("dia_id", ""),
                         "img_url": turn.get("img_url", ""),
                         "blip_caption": turn.get("blip_caption", ""),
-                        "timestamp": turn.get("timestamp", ""),
+                        "timestamp": session_timestamp,  # Use session-level timestamp
                     })
         
         return history
@@ -239,14 +252,21 @@ class LoCoMoQABenchmark(Benchmark):
         for chunk in chunks:
             messages.append(MessageCreate(role="user", content=chunk))
         
-        # Add evaluation prompt
-        eval_prompt = (
-            "Based on the conversation history provided above, please answer the following question. "
-            "Use only the information from the conversation to provide your answer."
-        )
-        messages.append(MessageCreate(role="user", content=eval_prompt))
+        # TODO: Consider adding an evaluation prompt to help guide the agent's responses
+        # eval_prompt = (
+        #     "Based on the conversation history provided above, please answer the following question. "
+        #     "Use only the information from the conversation to provide your answer."
+        # )
         
         return messages
+
+    async def _find_send_message_tool_id(self, client: AsyncLetta, agent_id: str) -> Optional[str]:
+        """Find the send_message tool ID for an agent."""
+        tools = await client.agents.tools.list(agent_id)
+        for tool in tools:
+            if tool.name == "send_message":
+                return tool.id
+        return None
 
     async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str) -> None:
         """
@@ -265,12 +285,18 @@ class LoCoMoQABenchmark(Benchmark):
         """
         Create agent configured for LoCoMo Question Answering.
         
-        If this is the first agent, create template agent and send all conversation messages.
-        For subsequent agents, create fresh agents and copy template agent's message history.
+        If this is the first agent for this sample_id, create template agent and send all conversation messages.
+        For subsequent agents with the same sample_id, create fresh agents and copy template agent's message history.
         """
+        print(f"Creating agent for sample {datum.sample_id}")
         
-        async with self.template_agent_lock:
-            if self.template_agent_id is None:
+        # Initialize lock for this sample_id if not exists
+        if datum.sample_id not in self.template_agent_locks:
+            self.template_agent_locks[datum.sample_id] = asyncio.Lock()
+        
+        async with self.template_agent_locks[datum.sample_id]:
+            if datum.sample_id not in self.template_agent_ids:
+                print(f"Creating template agent (first agent) for sample {datum.sample_id}")
                 # Create template agent
                 memory_blocks = [
                     CreateBlock(
@@ -291,25 +317,76 @@ class LoCoMoQABenchmark(Benchmark):
                     embedding_config=embedding_config,
                     memory_blocks=memory_blocks,
                 )
-                
-                # Send all conversation chunks to template agent
+
+                print(f"Created template agent: {template_agent.id}")
+
+                # Detach send_message tool from template agent to prevent it from responding
+                send_message_tool_id = await self._find_send_message_tool_id(client, template_agent.id)
+                if send_message_tool_id:
+                    await client.agents.tools.detach(template_agent.id, send_message_tool_id)
+
+                # Send all conversation chunks to template agent one by one
                 conversation_messages = self._create_conversation_messages(datum)
+                print(f"Sending {len(conversation_messages)} conversation messages to template agent")
                 
-                # Send messages and get response to populate message history
-                response = await client.agents.messages.create(
-                    agent_id=template_agent.id,
-                    messages=conversation_messages,
-                )
+                # Send messages one by one
+                for i, message in enumerate(conversation_messages):
+                    print(f"Sending message {i+1}/{len(conversation_messages)} to template agent")
+                    await client.agents.messages.create(
+                        agent_id=template_agent.id,
+                        messages=[message],
+                    )
+                    print(f"Sent message {i+1}/{len(conversation_messages)} to template agent")
+                
+                print("All conversation messages sent to template agent")
                 
                 # Get the message history from template agent to copy to others
-                message_history = await client.agents.messages.list(template_agent.id)
-                self.template_message_ids = [msg.id for msg in message_history if hasattr(msg, 'id')]
+                message_history = await client.agents.messages.list(template_agent.id, limit=1000)
                 
-                self.template_agent_id = template_agent.id
+                # Debug print all messages
+                print(f"\n=== DEBUG: Message History for sample {datum.sample_id} ===")
+                print(f"Total messages retrieved: {len(message_history)}")
+                
+                system_messages = []
+                valid_messages = []
+                
+                for i, msg in enumerate(message_history):
+                    has_id = hasattr(msg, 'id')
+                    msg_type = getattr(msg, 'message_type', None)
+                    msg_id = getattr(msg, 'id', 'NO_ID')
+                    
+                    print(f"Message {i+1}: ID={msg_id}, has_id={has_id}, message_type={msg_type}")
+                    
+                    # do we need to filter out system messages and reasoning messages?
+                    if has_id and msg_type != 'system_message':
+                        valid_messages.append(msg.id)
+                    else:
+                        system_messages.append({
+                            'index': i+1,
+                            'id': msg_id,
+                            'has_id': has_id,
+                            'message_type': msg_type
+                        })
+                
+                print(f"\nFiltered out {len(system_messages)} messages:")
+                for sys_msg in system_messages:
+                    print(f"  - Message {sys_msg['index']}: ID={sys_msg['id']}, has_id={sys_msg['has_id']}, type={sys_msg['message_type']}")
+                
+                print(f"\nKeeping {len(valid_messages)} valid message IDs:")
+                for j, msg_id in enumerate(valid_messages):
+                    print(f"  - Valid message {j+1}: {msg_id}")
+                
+                print("=== END DEBUG ===\n")
+                
+                self.template_message_ids[datum.sample_id] = valid_messages
+                print(f"Retrieved {len(self.template_message_ids[datum.sample_id])} message IDs from template agent")
+                
+                self.template_agent_ids[datum.sample_id] = template_agent.id
                 self.agent_datum_mapping[template_agent.id] = datum
                 return template_agent.id
         
         # Template agent exists, create new agent and copy message history
+        print(f"Creating new agent and copying from template agent {self.template_agent_ids[datum.sample_id]}")
         memory_blocks = [
             CreateBlock(
                 label="Task Instructions",
@@ -330,22 +407,37 @@ class LoCoMoQABenchmark(Benchmark):
             embedding_config=embedding_config,
             memory_blocks=memory_blocks,
         )
+        print(f"Created new agent: {agent.id}")
+        
+        # Detach send_message tool from regular agent initially
+        send_message_tool_id = await self._find_send_message_tool_id(client, agent.id)
+        if send_message_tool_id:
+            await client.agents.tools.detach(agent.id, send_message_tool_id)
         
         # Copy message history from template agent using modify()
-        if self.template_message_ids:
+        if self.template_message_ids[datum.sample_id]:
             try:
+                print(f"Copying {len(self.template_message_ids[datum.sample_id])} messages from template agent")
                 await client.agents.modify(
                     agent_id=agent.id,
-                    message_ids=self.template_message_ids,
+                    message_ids=self.template_message_ids[datum.sample_id],
                 )
+                print("Successfully copied message history via modify()")
             except Exception as e:
                 # If message_ids copying fails, fallback to sending messages directly
                 print(f"Warning: Failed to copy message history via modify(), falling back to direct messaging: {e}")
                 conversation_messages = self._create_conversation_messages(datum)
-                await client.agents.messages.create(
-                    agent_id=agent.id,
-                    messages=conversation_messages,
-                )
+                # Send messages one by one
+                for i, message in enumerate(conversation_messages):
+                    await client.agents.messages.create(
+                        agent_id=agent.id,
+                        messages=[message],
+                    )
+                print("Fallback message sending complete")
+        
+        # Reattach send_message tool to regular agent for evaluation
+        if send_message_tool_id:
+            await client.agents.tools.attach(agent.id, send_message_tool_id)
         
         self.agent_datum_mapping[agent.id] = datum
         return agent.id
@@ -356,10 +448,45 @@ class LoCoMoQABenchmark(Benchmark):
         """
         Evaluate QA prediction against ground truth answer.
         
-        Uses the existing grading system to determine if the predicted answer
-        matches the expected answer.
+        For adversarial questions (category 5), evaluates if the agent correctly
+        identifies the question as unanswerable. For other categories, uses
+        standard grading system.
         """
-        result = await grade_sample(datum.message, true, predicted)
+        if datum.category == 5:
+            # Adversarial questions - check if agent refuses to answer or indicates unanswerable
+            return await self._evaluate_adversarial_response(predicted, datum.message)
+        else:
+            # Regular questions - use standard grading
+            result = await grade_sample(datum.message, true, predicted)
+            return 1.0 if result == "A" else 0.0
+    
+    async def _evaluate_adversarial_response(self, predicted: str, question: str) -> float:
+        """
+        Evaluate if the agent correctly handles an adversarial question.
+        
+        Returns 1.0 if the agent appropriately refuses to answer or indicates 
+        the question is unanswerable, 0.0 otherwise.
+        """
+        adversarial_template = """You are evaluating whether an AI agent correctly identified an adversarial/unanswerable question.
+
+Question: {question}
+Agent Response: {predicted_answer}
+
+Adversarial questions are designed to trick the agent into providing wrong answers based on information not present in the conversation history. The agent should correctly identify these as unanswerable.
+
+Rate the response:
+- Give "A" if the agent correctly refuses to answer, says the information is not available, indicates uncertainty, or explicitly states the question cannot be answered based on the given information.
+- Give "B" if the agent attempts to answer the question with specific information that wasn't provided in the conversation.
+
+Focus on whether the agent appropriately handled the adversarial nature of the question rather than the specific content of any answer.
+
+Just return the letter "A" or "B", with no text around it."""
+
+        # Use grade_sample with custom template - it will format with actual values
+        result = await grade_sample(question, "", predicted, custom_template=adversarial_template)
+        
+        # For adversarial questions, we only expect A or B responses
+        # A = correctly identified as unanswerable, B = incorrectly answered
         return 1.0 if result == "A" else 0.0
     
     async def get_response(
@@ -391,7 +518,8 @@ class LoCoMoQABenchmark(Benchmark):
                     "chunking_strategy": self.chunking_strategy,
                     "num_conversation_turns": len(self.agent_datum_mapping.get(agent_id, {}).get("conversation_history", [])),
                     "sample_id": self.agent_datum_mapping.get(agent_id, {}).get("sample_id", ""),
-                    "question_category": self.agent_datum_mapping.get(agent_id, {}).get("category", "unknown")
+                    "question_category": self.agent_datum_mapping.get(agent_id, {}).get("category", "unknown"),
+                    "correct_answer": self.agent_datum_mapping.get(agent_id, {}).get("answer", "")
                 }
                 for agent_id in agent_ids
                 if agent_id in self.agent_datum_mapping
@@ -401,5 +529,5 @@ class LoCoMoQABenchmark(Benchmark):
 
 # Benchmark instances for different chunking strategies
 locomo_qa_benchmark = LoCoMoQABenchmark(chunking_strategy="session")
-locomo_qa_turn_benchmark = LoCoMoQABenchmark(chunking_strategy="turn")
-locomo_qa_time_benchmark = LoCoMoQABenchmark(chunking_strategy="time_window")
+# locomo_qa_turn_benchmark = LoCoMoQABenchmark(chunking_strategy="turn")
+# locomo_qa_time_benchmark = LoCoMoQABenchmark(chunking_strategy="time_window")
