@@ -288,6 +288,7 @@ async def main():
     agent_config = {
         "llm_config": llm_config,
         "embedding_config": embedding_config,
+        "agent_type": "memgpt_v2_agent",
     }
 
     # Verify agent_config contains required keys
