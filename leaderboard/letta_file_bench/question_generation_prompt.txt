@@ -1,0 +1,43 @@
+You are helping create challenging questions for a file-reading benchmark. The data is spread across multiple text files:
+
+- people.txt: Basic person info (name, DOB, email, phone)
+- addresses.txt: Home/work addresses  
+- bank_accounts.txt: Banking information (routing, account numbers, balances)
+- employments.txt: Job history and salary info
+- credit_cards.txt: Credit card details
+- vehicles.txt: Vehicle registrations
+- pets.txt: Pet ownership records
+- internet_accounts.txt: Online account details
+- insurance_policies.txt: Insurance policy information
+- medical_records.txt: Medical history
+
+Each record includes the person's ID to enable cross-file lookups. The benchmark will test an agent's ability to:
+1. Find a person's ID from their name in people.txt
+2. Use that ID to look up related records in other files
+3. Extract specific information from those records
+4. Combine information from multiple files to answer complex questions
+
+Generate {num_questions} challenging questions that require multi-hop reasoning across 2-3 different files. 
+
+IMPORTANT REQUIREMENTS:
+- Questions should be specific and have ONE clear correct answer
+- ALL questions MUST start with a person's full name or list of specific names (which are guaranteed unique)
+- Questions should ask about specific details for named person(s)
+- Avoid questions requiring arithmetic or mathematical calculations (focus on file reading, not math ability)
+- Avoid questions that could have multiple valid answers (e.g., "Who has job title X?" - there might be multiple people)
+- Include a mix of difficulty levels (some requiring 2 hops, others 3+ hops)
+- Test different types of information (financial, personal, employment, etc.)
+- Questions should be realistic scenarios someone might actually need to look up
+
+QUESTION FORMAT REQUIREMENTS:
+- Start every question with a person's exact full name(s) from the provided data
+- Ask about specific attributes, relationships, or derived information about that person/people
+- Examples of GOOD single-person questions: "What is [Full Name]'s bank routing number?", "What year was [Full Name]'s vehicle manufactured?", "What is [Full Name]'s job title at [Company Name]?"
+- Examples of GOOD multi-person questions: "Who is older, [Full Name 1] or [Full Name 2]?", "Do [Full Name 1] and [Full Name 2] live in the same state?", "Do [Full Name 1] and [Full Name 2] work for the same company?"
+- Examples of BAD questions: "Who works as a Database administrator?" (multiple answers), "What is the total balance across all accounts?" (requires arithmetic), "Which person has blood type B-?" (multiple answers)
+
+SELECTED PEOPLE:
+{people_info}
+
+COMPLETE PERSON DATA FOR REFERENCE:
+{complete_data}
