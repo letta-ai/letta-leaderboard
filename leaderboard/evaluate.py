@@ -3,7 +3,6 @@ import importlib
 import json
 import os
 import datetime
-import traceback
 import asyncio
 from typing import Callable, Any
 from tqdm import tqdm
