@@ -44,15 +44,13 @@ from openai import AsyncOpenAI
 from tqdm import tqdm
 
 # Import from refactored modules
-from leaderboard.letta_file_bench.models.question_models import QuestionSet
+from leaderboard.letta_file_bench.models.question_models import QuestionAnswer
 from leaderboard.letta_file_bench.models.entities import (
     Person, Address, BankAccount, Employment, CreditCard, Vehicle, Pet,
     InternetAccount, InsurancePolicy, MedicalRecord, ENTITY_MAP
 )
 from leaderboard.letta_file_bench.utils.id_generator import reset_id_counters, generate_unique_id
 from leaderboard.letta_file_bench.utils.uniqueness import reset_uniqueness_tracking, ensure_unique_value
-from leaderboard.letta_file_bench.utils.prompt_loader import load_prompt_template, create_people_context
-from leaderboard.letta_file_bench.utils.people_selector import select_random_people
 
 # Backwards compatibility functions
 def _uid(pref: str) -> str:
@@ -132,24 +130,41 @@ def export_golden(people: List[Person], evidence: dict, out_dir: Path):
 
 
 
-async def generate_questions_batch(
-    people_subset: List[Dict[str, Any]], 
-    prompt_template: str,
-    batch_size: int,
+def load_prompts(prompts_dir: Path) -> Dict[str, str]:
+    """Load all three prompt templates."""
+    return {
+        "single_hop": (prompts_dir / "single_hop_prompt.txt").read_text(encoding="utf-8"),
+        "multi_hop": (prompts_dir / "multi_hop_prompt.txt").read_text(encoding="utf-8"),
+        "comparison": (prompts_dir / "comparison_prompt.txt").read_text(encoding="utf-8")
+    }
+
+
+async def generate_single_question(
+    question_type: str,
+    all_people: List[Dict[str, Any]],
+    prompts: Dict[str, str],
     model: str,
     client: AsyncOpenAI,
-    temperature: float = 0.8,
-    batch_id: int = 0
-) -> List[Dict[str, Any]]:
-    """Generate a single batch of questions for a subset of people asynchronously."""
+    temperature: float = 0.8
+) -> Dict[str, Any]:
+    """Generate a single question by randomly sampling people from the entire dataset."""
     
-    people_info, complete_data = create_people_context(people_subset)
-    
-    formatted_prompt = prompt_template.format(
-        num_questions=batch_size,
-        people_info=people_info,
-        complete_data=complete_data
-    )
+    if question_type == "comparison":
+        # Randomly sample 2 people for comparison
+        person1, person2 = random.sample(all_people, 2)
+        formatted_prompt = prompts["comparison"].format(
+            person1_name=person1["full_name"],
+            person2_name=person2["full_name"],
+            person1_data=json.dumps(person1, indent=2),
+            person2_data=json.dumps(person2, indent=2)
+        )
+    else:
+        # Randomly sample 1 person for single_hop or multi_hop
+        person = random.choice(all_people)
+        formatted_prompt = prompts[question_type].format(
+            person_name=person["full_name"],
+            person_data=json.dumps(person, indent=2)
+        )
     
     try:
         response = await client.beta.chat.completions.parse(
@@ -157,50 +172,46 @@ async def generate_questions_batch(
             messages=[
                 {
                     "role": "system", 
-                    "content": "You are an expert at creating challenging, multi-hop reasoning questions for file-reading benchmarks. You always provide questions with specific, verifiable answers."
+                    "content": "You are an expert at creating challenging file-reading questions. Always provide questions with specific, verifiable answers."
                 },
                 {
                     "role": "user", 
                     "content": formatted_prompt
                 }
             ],
-            response_format=QuestionSet,
+            response_format=QuestionAnswer,
             temperature=temperature
         )
         
-        question_set = response.choices[0].message.parsed
+        qa = response.choices[0].message.parsed
         
-        # Convert to the format expected by the benchmark system
-        questions = []
-        for qa in question_set.questions:
-            questions.append({
-                "question": qa.question,
-                "answer": qa.answer,
-                "difficulty": qa.difficulty,
-                "required_files": qa.required_files,
-                "reasoning_steps": qa.reasoning_steps,
-                "question_type": "multi_hop_llm_generated",
-                "batch_id": batch_id  # For debugging/tracking
-            })
-        
-        return questions
+        return {
+            "question": qa.question,
+            "answer": qa.answer,
+            "difficulty": qa.difficulty,
+            "question_type": qa.question_type,
+            "required_files": qa.required_files,
+            "reasoning_steps": qa.reasoning_steps
+        }
         
     except Exception as e:
-        print(f"Warning: Batch {batch_id} failed: {e}")
-        return []
+        print(f"Warning: Failed to generate {question_type} question: {e}")
+        return None
 
 
 def generate_questions_with_llm(
-    selected_people: List[Dict[str, Any]], 
-    prompt_file: Path,
+    all_people: List[Dict[str, Any]], 
     num_questions: int = 10,
     model: str = "gpt-4o",
     api_key: Optional[str] = None,
-    max_batch_size: int = 20,
     temperature: float = 0.8,
-    max_concurrent: int = 5
+    max_concurrent: int = 5,
+    single_hop_pct: float = 0.4,
+    multi_hop_pct: float = 0.2,
+    comparison_pct: float = 0.4,
+    seed: int = 42
 ) -> List[Dict[str, Any]]:
-    """Use an LLM with structured outputs to generate challenging questions in batches."""
+    """Use an LLM with structured outputs to generate challenging questions by randomly sampling from all people."""
     
     if not api_key:
         import os
@@ -208,74 +219,75 @@ def generate_questions_with_llm(
         if not api_key:
             raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
     
-    client = AsyncOpenAI(api_key=api_key)
-    prompt_template = load_prompt_template(prompt_file)
+    # Validate percentages
+    total_pct = single_hop_pct + multi_hop_pct + comparison_pct
+    if abs(total_pct - 1.0) > 1e-6:
+        raise ValueError(f"Question type percentages must sum to 1.0, got {total_pct}")
     
-    # Run async batch generation
-    all_questions = asyncio.run(generate_all_batches_async(
-        selected_people, 
-        prompt_template,
+    client = AsyncOpenAI(api_key=api_key)
+    prompts_dir = Path(__file__).parent / "prompts"
+    prompts = load_prompts(prompts_dir)
+    
+    # Set random seed for reproducible sampling
+    random.seed(seed)
+    
+    # Run async individual question generation
+    all_questions = asyncio.run(generate_all_questions_async(
+        all_people,
+        prompts,
         num_questions,
         model,
         client,
-        max_batch_size,
         temperature,
-        max_concurrent
+        max_concurrent,
+        single_hop_pct,
+        multi_hop_pct,
+        comparison_pct
     ))
     
     return all_questions
 
 
-async def generate_all_batches_async(
-    selected_people: List[Dict[str, Any]], 
-    prompt_template: str,
+async def generate_all_questions_async(
+    all_people: List[Dict[str, Any]], 
+    prompts: Dict[str, str],
     num_questions: int,
     model: str,
     client: AsyncOpenAI,
-    max_batch_size: int,
     temperature: float,
-    max_concurrent: int = 5
+    max_concurrent: int,
+    single_hop_pct: float,
+    multi_hop_pct: float,
+    comparison_pct: float
 ) -> List[Dict[str, Any]]:
-    """Generate all question batches concurrently with controlled concurrency."""
+    """Generate individual questions concurrently with controlled concurrency."""
     
-    # Calculate batching strategy
-    num_batches = max(1, (num_questions + max_batch_size - 1) // max_batch_size)
-    questions_per_batch = num_questions // num_batches
-    remaining_questions = num_questions % num_batches
+    # Calculate question type distribution
+    single_hop_count = int(num_questions * single_hop_pct)
+    multi_hop_count = int(num_questions * multi_hop_pct)
+    comparison_count = num_questions - single_hop_count - multi_hop_count  # Remainder goes to comparison
     
-    # Ensure we have enough people for diversity (need unique people per batch)
-    people_per_batch = max(2, len(selected_people) // num_batches)
-    min_people_needed = people_per_batch * num_batches
-    if len(selected_people) < min_people_needed:
-        raise ValueError(f"Need at least {min_people_needed} people for {num_batches} batches with {people_per_batch} people each, got {len(selected_people)}")
+    # Create question type schedule
+    question_types = (
+        ["single_hop"] * single_hop_count + 
+        ["multi_hop"] * multi_hop_count + 
+        ["comparison"] * comparison_count
+    )
     
-    # Shuffle people and create non-overlapping batches
-    import random
-    shuffled_people = selected_people.copy()
-    random.shuffle(shuffled_people)
+    # Shuffle the question types for variety
+    random.shuffle(question_types)
     
-    # Create all batch tasks
-    batch_tasks = []
-    for batch_idx in range(num_batches):
-        # Calculate questions for this batch
-        batch_questions = questions_per_batch + (1 if batch_idx < remaining_questions else 0)
-        
-        # Select unique people for this batch (no overlap with other batches)
-        start_idx = batch_idx * people_per_batch
-        end_idx = start_idx + people_per_batch
-        batch_people = shuffled_people[start_idx:end_idx]
-        
-        # Create async task for this batch
-        task = generate_questions_batch(
-            batch_people, 
-            prompt_template, 
-            batch_questions, 
+    # Create all question generation tasks
+    tasks = [
+        generate_single_question(
+            question_type, 
+            all_people, 
+            prompts, 
             model, 
-            client,
-            temperature,
-            batch_idx
-        )
-        batch_tasks.append(task)
+            client, 
+            temperature
+        ) for question_type in question_types
+    ]
     
     # Use semaphore to limit concurrent requests
     semaphore = asyncio.Semaphore(max_concurrent)
@@ -284,21 +296,16 @@ async def generate_all_batches_async(
         async with semaphore:
             return await task
     
-    # Execute all batches with progress bar
-    with tqdm(total=num_batches, desc=f"Generating question batches with {model} (async)", unit="batch") as pbar:
+    # Execute all questions with progress bar
+    with tqdm(total=num_questions, desc=f"Generating questions with {model} (async)", unit="question") as pbar:
         results = []
-        for coro in asyncio.as_completed([run_with_semaphore(task) for task in batch_tasks]):
+        for coro in asyncio.as_completed([run_with_semaphore(task) for task in tasks]):
             result = await coro
-            results.append(result)
+            if result:  # Skip None results from failed generations
+                results.append(result)
             pbar.update(1)
     
-    # Flatten results
-    all_questions = []
-    for batch_result in results:
-        if batch_result:  # Skip empty results from failed batches
-            all_questions.extend(batch_result)
-    
-    return all_questions
+    return results
 
 
 
@@ -334,13 +341,13 @@ def parse_args():
     # LLM question generation options
     ap.add_argument("--generate-llm-questions", action="store_true", help="Generate questions using LLM from existing golden_answers.json")
     ap.add_argument("--llm-model", type=str, default="gpt-4o", help="LLM model to use for question generation")
-    ap.add_argument("--num-llm-people", type=int, default=5, help="Number of people to select for LLM question generation")
     ap.add_argument("--num-questions", type=int, default=10, help="Number of questions to generate")
-    ap.add_argument("--llm-seed", type=int, default=42, help="Seed for random person selection")
-    ap.add_argument("--prompt-file", type=Path, default=Path(__file__).parent / "question_generation_prompt.txt", help="Path to prompt template file")
-    ap.add_argument("--max-batch-size", type=int, default=20, help="Maximum questions per LLM batch")
+    ap.add_argument("--llm-seed", type=int, default=42, help="Seed for random selection")
     ap.add_argument("--temperature", type=float, default=0.8, help="LLM temperature for diversity vs accuracy balance")
     ap.add_argument("--max-concurrent", type=int, default=5, help="Maximum concurrent requests for parallel generation")
+    ap.add_argument("--single-hop-pct", type=float, default=0.4, help="Percentage of single-hop questions (0.0-1.0)")
+    ap.add_argument("--multi-hop-pct", type=float, default=0.2, help="Percentage of multi-hop questions (0.0-1.0)")
+    ap.add_argument("--comparison-pct", type=float, default=0.4, help="Percentage of comparison questions (0.0-1.0)")
     
     return ap.parse_args()
 
@@ -358,20 +365,24 @@ def main():
         
         print(f"🔍 Generating LLM questions from existing data at {golden_path}")
         
-        # Select random people from existing data
-        selected_people = select_random_people(golden_path, args.num_llm_people, args.llm_seed)
-        print(f"📝 Selected {len(selected_people)} people for question generation")
+        # Load all people from existing data
+        with open(golden_path, 'r') as f:
+            all_people_data = json.load(f)
+        all_people = list(all_people_data.values())
+        print(f"📝 Loaded {len(all_people)} people from golden_answers.json")
         
         # Generate questions using LLM
         try:
             questions = generate_questions_with_llm(
-                selected_people, 
-                args.prompt_file,
+                all_people,
                 args.num_questions,
                 args.llm_model,
-                max_batch_size=args.max_batch_size,
                 temperature=args.temperature,
-                max_concurrent=args.max_concurrent
+                max_concurrent=args.max_concurrent,
+                single_hop_pct=args.single_hop_pct,
+                multi_hop_pct=args.multi_hop_pct,
+                comparison_pct=args.comparison_pct,
+                seed=args.llm_seed
             )
             print(f"🤖 Generated {len(questions)} questions using {args.llm_model}")
             
