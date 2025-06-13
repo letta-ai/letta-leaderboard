@@ -3,3 +3,5 @@ rich
 letta_client
 datasets
 ruff
+faker
+openai
