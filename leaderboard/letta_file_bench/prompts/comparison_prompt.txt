@@ -1,0 +1,44 @@
+You are helping create challenging questions for a file-reading benchmark. The data is spread across multiple text files:
+
+- people.txt: Basic person info (name, DOB, email, phone)
+- addresses.txt: Home/work addresses  
+- bank_accounts.txt: Banking information (routing, account numbers, balances)
+- employments.txt: Job history and salary info
+- credit_cards.txt: Credit card details
+- vehicles.txt: Vehicle registrations
+- pets.txt: Pet ownership records
+- internet_accounts.txt: Online account details
+- insurance_policies.txt: Insurance policy information
+- medical_records.txt: Medical history
+
+Each record includes the person's ID to enable cross-file lookups.
+
+TASK: Generate ONE comparison question between the two people provided below.
+
+COMPARISON DEFINITION: Compare two or more people (e.g., "Who is older, John Smith or Jane Doe?", "Do John Smith and Jane Doe live in the same state?")
+
+REQUIREMENTS:
+- Use both people's exact full names: "{person1_name}" and "{person2_name}"
+- Ask for a comparison between the two people
+- Answer should be simple: a name, yes/no, etc. (NO compound answers)
+- NO questions requiring arithmetic or mathematical calculations
+- Question should require looking up information about both people
+
+COMPARISON QUESTION EXAMPLES:
+- "Who is older, {person1_name} or {person2_name}?"
+- "Do {person1_name} and {person2_name} live in the same state?"
+- "Do {person1_name} and {person2_name} work for the same company?"
+- "Who has more credit cards, {person1_name} or {person2_name}?"
+- "Do {person1_name} and {person2_name} have the same blood type?"
+
+CRITICAL ANSWER REQUIREMENTS:
+- Each question must have exactly ONE singular answer
+- NO compound questions asking for multiple pieces of information
+- NO questions with "and" requiring multiple answers
+- Answers should be simple values: a name, yes/no, etc.
+
+PERSON 1 DATA:
+{person1_data}
+
+PERSON 2 DATA:
+{person2_data}

@@ -1,0 +1,76 @@
+You are helping create challenging questions for a file-reading benchmark. The data is spread across multiple text files:
+
+- people.txt: Basic person info (name, DOB, email, phone)
+- addresses.txt: Home/work addresses  
+- bank_accounts.txt: Banking information (routing, account numbers, balances)
+- employments.txt: Job history and salary info
+- credit_cards.txt: Credit card details
+- vehicles.txt: Vehicle registrations
+- pets.txt: Pet ownership records
+- internet_accounts.txt: Online account details
+- insurance_policies.txt: Insurance policy information
+- medical_records.txt: Medical history
+
+Each record includes the person's ID to enable cross-file lookups. The benchmark will test an agent's ability to:
+1. Find a person's ID from their name in people.txt
+2. Use that ID to look up related records in other files
+3. Extract specific information from those records
+4. Combine information from multiple files to answer complex questions
+
+Generate {num_questions} challenging questions with a good mix of different types.
+
+QUESTION TYPES (categorize each question):
+- single_hop: One hop from people.txt to another file (e.g., "What is John Smith's bank routing number?")
+- multi_hop: Reverse lookups starting from entity IDs (e.g., "How many pets does the owner of acct-0015 have?", "What is the job title of the person who owns card-0008?")
+- comparison: Compare two or more people (e.g., "Who is older, John Smith or Jane Doe?", "Do John Smith and Jane Doe live in the same state?")
+
+AVAILABLE ENTITY ID PREFIXES for multi_hop questions:
+- acct-XXXX: Bank accounts (in bank_accounts.txt)
+- card-XXXX: Credit cards (in credit_cards.txt)  
+- veh-XXXX: Vehicles (in vehicles.txt)
+- emp-XXXX: Employments (in employments.txt)
+- ins-XXXX: Insurance policies (in insurance_policies.txt)
+- addr-XXXX: Addresses (in addresses.txt)
+- pet-XXXX: Pets (in pets.txt)
+- net-XXXX: Internet accounts (in internet_accounts.txt)
+- med-XXXX: Medical records (in medical_records.txt)
+
+MULTI-HOP QUESTION EXAMPLES:
+- "How many vehicles does the owner of acct-0015 have?"
+- "What is the email address of the person who owns card-0008?"  
+- "What state does the owner of veh-0023 live in?"
+- "What is the salary of the person who has policy ins-0012?"
+
+GENERATE A BALANCED MIX: Aim for roughly 40% comparison questions, 40% single_hop, 20% multi_hop.
+
+IMPORTANT REQUIREMENTS:
+- Questions should be specific and have ONE clear correct answer
+- MOST questions should start with a person's full name, BUT multi_hop questions can start with entity IDs
+- For multi_hop questions, use the specific IDs from the provided data below
+- Avoid questions requiring arithmetic or mathematical calculations (focus on file reading, not math ability)
+- Avoid questions that could have multiple valid answers (e.g., "Who has job title X?" - there might be multiple people)
+- Include a mix of difficulty levels (some requiring 2 hops, others 3+ hops)
+- Test different types of information (financial, personal, employment, etc.)
+- Questions should be realistic scenarios someone might actually need to look up
+
+CRITICAL ANSWER REQUIREMENTS:
+- Each question must have exactly ONE singular answer
+- NO compound questions asking for multiple pieces of information
+- NO questions with "and" requiring multiple answers
+- Answers should be simple values: a number, a name, a date, a yes/no, etc.
+- BAD: "What company does John Doe work for and what is his job title?" (two answers)
+- GOOD: "What company does John Doe work for?" (one answer)
+- GOOD: "What is John Doe's job title?" (one answer)
+
+QUESTION FORMAT REQUIREMENTS:
+- Start every question with a person's exact full name(s) from the provided data
+- Ask about ONE specific attribute only
+- Examples of GOOD single-person questions: "What is [Full Name]'s bank routing number?", "What year was [Full Name]'s vehicle manufactured?", "What company does [Full Name] work for?"
+- Examples of GOOD multi-person questions: "Who is older, [Full Name 1] or [Full Name 2]?", "Do [Full Name 1] and [Full Name 2] live in the same state?", "Do [Full Name 1] and [Full Name 2] work for the same company?"
+- Examples of BAD questions: "Who works as a Database administrator?" (multiple answers), "What is the total balance across all accounts?" (requires arithmetic), "What company does John work for and what is his job title?" (compound question)
+
+SELECTED PEOPLE:
+{people_info}
+
+COMPLETE PERSON DATA FOR REFERENCE:
+{complete_data}

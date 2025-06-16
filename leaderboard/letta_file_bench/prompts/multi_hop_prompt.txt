@@ -1,0 +1,51 @@
+You are helping create challenging questions for a file-reading benchmark. The data is spread across multiple text files:
+
+- people.txt: Basic person info (name, DOB, email, phone)
+- addresses.txt: Home/work addresses  
+- bank_accounts.txt: Banking information (routing, account numbers, balances)
+- employments.txt: Job history and salary info
+- credit_cards.txt: Credit card details
+- vehicles.txt: Vehicle registrations
+- pets.txt: Pet ownership records
+- internet_accounts.txt: Online account details
+- insurance_policies.txt: Insurance policy information
+- medical_records.txt: Medical history
+
+Each record includes the person's ID to enable cross-file lookups.
+
+TASK: Generate ONE multi-hop question using a reverse lookup starting from an entity ID.
+
+MULTI-HOP DEFINITION: Reverse lookups starting from entity IDs (e.g., "How many pets does the owner of acct-0015 have?")
+
+AVAILABLE ENTITY ID PREFIXES:
+- acct-XXXX: Bank accounts (in bank_accounts.txt)
+- card-XXXX: Credit cards (in credit_cards.txt)  
+- veh-XXXX: Vehicles (in vehicles.txt)
+- emp-XXXX: Employments (in employments.txt)
+- ins-XXXX: Insurance policies (in insurance_policies.txt)
+- addr-XXXX: Addresses (in addresses.txt)
+- pet-XXXX: Pets (in pets.txt)
+- net-XXXX: Internet accounts (in internet_accounts.txt)
+- med-XXXX: Medical records (in medical_records.txt)
+
+REQUIREMENTS:
+- Start with a specific entity ID from the provided data
+- Question should require: entity file → find owner person_id → people data → extract info about that person
+- Answer should be simple: a number, name, date, etc. (NO compound answers)
+- NO questions requiring arithmetic or mathematical calculations
+- Use actual IDs from the provided person data below
+
+MULTI-HOP QUESTION EXAMPLES:
+- "How many vehicles does the owner of acct-0015 have?"
+- "What is the email address of the person who owns card-0008?"  
+- "What state does the owner of veh-0023 live in?"
+- "What is the salary of the person who has policy ins-0012?"
+
+CRITICAL ANSWER REQUIREMENTS:
+- Each question must have exactly ONE singular answer
+- NO compound questions asking for multiple pieces of information
+- NO questions with "and" requiring multiple answers
+- Answers should be simple values: a number, a name, a date, etc.
+
+PERSON DATA (use actual IDs from this data):
+{person_data}

@@ -114,11 +114,25 @@ class LettaBenchmark(Benchmark):
 
 
 class ArchivalMemoryReadBenchmark(LettaBenchmark):
+
+    # async def create_agent_fun(
+    #     self,
+    #     client: AsyncLetta,
+    #     datum: Dotdict,
+    #     agent_config: dict,
+    # ) -> str:
+    #     memory_blocks = [CreateBlock(label="Persona", value="You are trying to answer a question about a person. Search the archival memory for the answer if you don't know the answer.")]
+    #     agent = await client.agents.create(
+    #         memory_blocks=memory_blocks,
+    #         **agent_config,
+    #     )
+    #     return agent.id
+
     async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str):
         for fact in datum.supporting_fact:
             await client.agents.passages.create(agent_id=agent_id, text=fact)
-        for fact in obvious_facts:
-            await client.agents.passages.create(agent_id=agent_id, text=fact)
+        # for fact in obvious_facts:
+        #     await client.agents.passages.create(agent_id=agent_id, text=fact)
 
     async def get_usage_statistics(
         self,

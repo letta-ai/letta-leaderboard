@@ -3,7 +3,6 @@ import importlib
 import json
 import os
 import datetime
-import traceback
 import asyncio
 from typing import Callable, Any
 from tqdm import tqdm
@@ -288,6 +287,7 @@ async def main():
     agent_config = {
         "llm_config": llm_config,
         "embedding_config": embedding_config,
+        "agent_type": "memgpt_v2_agent",
     }
 
     # Verify agent_config contains required keys

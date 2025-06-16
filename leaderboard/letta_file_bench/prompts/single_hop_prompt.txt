@@ -1,0 +1,38 @@
+You are helping create challenging questions for a file-reading benchmark. The data is spread across multiple text files:
+
+- people.txt: Basic person info (name, DOB, email, phone)
+- addresses.txt: Home/work addresses  
+- bank_accounts.txt: Banking information (routing, account numbers, balances)
+- employments.txt: Job history and salary info
+- credit_cards.txt: Credit card details
+- vehicles.txt: Vehicle registrations
+- pets.txt: Pet ownership records
+- internet_accounts.txt: Online account details
+- insurance_policies.txt: Insurance policy information
+- medical_records.txt: Medical history
+
+Each record includes the person's ID to enable cross-file lookups. The benchmark will test an agent's ability to:
+1. Find a person's ID from their name in people.txt
+2. Use that ID to look up related records in other files
+3. Extract specific information from those records
+
+TASK: Generate ONE single-hop question about the person below.
+
+SINGLE-HOP DEFINITION: One hop from people.txt to another file (e.g., "What is John Smith's bank routing number?")
+
+REQUIREMENTS:
+- Start with the person's exact full name: "{person_name}"
+- Ask about ONE specific attribute from their records
+- Question should require: people.txt → person_id → one other file → extract value
+- Answer should be simple: a number, name, date, etc. (NO compound answers)
+- NO questions requiring arithmetic or mathematical calculations
+- Ensure the answer exists in the provided data
+
+CRITICAL ANSWER REQUIREMENTS:
+- Each question must have exactly ONE singular answer
+- NO compound questions asking for multiple pieces of information
+- NO questions with "and" requiring multiple answers
+- Answers should be simple values: a number, a name, a date, etc.
+
+PERSON DATA:
+{person_data}
