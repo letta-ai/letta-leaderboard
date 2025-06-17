@@ -196,11 +196,11 @@ class LoCoMoQABenchmark(Benchmark):
             if not session_timestamp and turn.get('timestamp'):
                 session_timestamp = turn['timestamp']
         
-        content = ", ".join(turn_texts)
+        content = "\n".join(turn_texts)
         
         # Add timestamp at the beginning if available
         if session_timestamp:
-            content = f"Timestamp: {session_timestamp} {content}"
+            content = f"Timestamp: {session_timestamp}\n{content}"
         
         return content
     
@@ -528,7 +528,158 @@ Just return the letter "A" or "B", with no text around it."""
         )
 
 
+class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
+    """
+    LoCoMo Question Answering benchmark for evaluating very long-term conversational memory.
+    
+    Similar to LoCoMoQABenchmark, but uses a file-based memory solution.
+    """
+
+    def __init__(self, data_path: Optional[str] = None, chunking_strategy: Literal["turn", "session", "time_window"] = "session"):
+        super().__init__(data_path, chunking_strategy)
+        self.data_source_ids = {}
+
+    def _create_conversation_string_with_timestamp(self, conversation_history: List[Dict]) -> list[tuple[str, str]]:
+        """Create a list of (content, timestamp) tuples representing the conversation history."""
+        if self.chunking_strategy == "turn":
+            return self._chunk_by_turn_with_timestamp(conversation_history)
+        elif self.chunking_strategy == "session":
+            return self._chunk_by_session_with_timestamp(conversation_history)
+        elif self.chunking_strategy == "time_window":
+            return self._chunk_by_time_window_with_timestamp(conversation_history)
+        else:
+            raise ValueError(f"Unknown chunking strategy: {self.chunking_strategy}")
+
+    def _chunk_by_turn_with_timestamp(self, conversation_history: List[Dict]) -> list[tuple[str, str]]:
+        """Chunk conversation with each turn as a separate message, returning (content, timestamp)."""
+        chunks = []
+        for turn in conversation_history:
+            content = f"{turn['speaker']}: {turn['text']}"
+            if turn.get('img_url') and turn.get('blip_caption'):
+                content += f" [Image: {turn['blip_caption']}]"
+            
+            timestamp = turn.get('timestamp', "")
+            chunks.append((content, timestamp))
+        return chunks
+
+    def _format_session_chunk_with_timestamp(self, turns: List[Dict]) -> tuple[str, str]:
+        """Format turns from a session into a content string and a timestamp."""
+        turn_texts = []
+        session_timestamp = ""
+        
+        for turn in turns:
+            speaker_text = f"{turn['speaker']}: {turn['text']}"
+            if turn.get('img_url') and turn.get('blip_caption'):
+                speaker_text += f" [Image: {turn['blip_caption']}]"
+            turn_texts.append(speaker_text)
+            
+            if not session_timestamp and turn.get('timestamp'):
+                session_timestamp = turn['timestamp']
+        
+        content = "\n".join(turn_texts)
+        return content, session_timestamp
+
+    def _chunk_by_session_with_timestamp(self, conversation_history: List[Dict]) -> list[tuple[str, str]]:
+        """Chunk conversation by session, returning (content, timestamp)."""
+        chunks = []
+        current_session = None
+        current_chunk_turns = []
+        
+        for turn in conversation_history:
+            if turn['session'] != current_session:
+                if current_chunk_turns:
+                    session_content, session_timestamp = self._format_session_chunk_with_timestamp(current_chunk_turns)
+                    chunks.append((session_content, session_timestamp))
+                
+                current_session = turn['session']
+                current_chunk_turns = [turn]
+            else:
+                current_chunk_turns.append(turn)
+        
+        if current_chunk_turns:
+            session_content, session_timestamp = self._format_session_chunk_with_timestamp(current_chunk_turns)
+            chunks.append((session_content, session_timestamp))
+            
+        return chunks
+
+    def _chunk_by_time_window_with_timestamp(self, conversation_history: List[Dict], window_size: int = 10) -> list[tuple[str, str]]:
+        """Chunk conversation by time window, returning (content, timestamp)."""
+        chunks = []
+        for i in range(0, len(conversation_history), window_size):
+            window_turns = conversation_history[i:i + window_size]
+            turn_texts = []
+            window_timestamp = ""
+            
+            for turn in window_turns:
+                speaker_text = f"{turn['speaker']}: {turn['text']}"
+                if turn.get('img_url') and turn.get('blip_caption'):
+                    speaker_text += f" [Image: {turn['blip_caption']}]"
+                turn_texts.append(speaker_text)
+                
+                if not window_timestamp and turn.get('timestamp'):
+                    window_timestamp = turn['timestamp']
+            
+            content = "\n".join(turn_texts)
+            chunks.append((content, window_timestamp))
+        return chunks
+
+    async def create_agent_fun(
+        self,
+        client: AsyncLetta,
+        datum: Dotdict,
+        agent_config: dict,
+    ) -> str:
+        # Ensure agent_config contains required keys
+        assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
+        assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+        
+        print(f"Creating agent for sample {datum.sample_id}")
+        
+        # Initialize lock for this sample_id if not exists
+        if datum.sample_id not in self.template_agent_locks:
+            self.template_agent_locks[datum.sample_id] = asyncio.Lock()
+        
+        async with self.template_agent_locks[datum.sample_id]:
+            if datum.sample_id not in self.data_source_ids:
+                # First time for this sample_id: create a source and upload files
+                print(f"Creating new data source for sample {datum.sample_id}")
+                source = await client.sources.create(
+                    name=f"Conversation Context for {datum.sample_id}",
+                    description=f"The conversation history, containing timestamped messages from {datum.speakers['speaker_a']} and {datum.speakers['speaker_b']}."
+                )
+
+                # prepare the conversation from datum as strings
+                conversation_chunks = self._create_conversation_string_with_timestamp(datum.conversation_history)
+
+                for content, timestamp in conversation_chunks:
+                    await client.sources.files.upload(
+                        source_id=source.id,
+                        file_name=(timestamp, content),
+                    )
+                
+                self.data_source_ids[datum.sample_id] = source.id
+            
+        source_id = self.data_source_ids[datum.sample_id]
+        print(f"Using data source {source_id} for sample {datum.sample_id}")
+
+        # create a new agent for this sample_id, with file capabilities
+        agent = await client.agents.create(
+            agent_type="memgpt_v2_agent",
+            include_base_tools=False,
+            tools=["open_file", "close_file", "grep", "search_files", "send_message"],
+            **agent_config,
+        )
+
+        # attach the source to the agent
+        await client.agents.sources.attach(agent.id, source_id)
+
+        self.agent_datum_mapping[agent.id] = datum
+        return agent.id
+
+
+
 # Benchmark instances for different chunking strategies
 locomo_qa_benchmark = LoCoMoQABenchmark(chunking_strategy="session")
+locomo_qa_benchmark_file = LoCoMoQAFileBenchmark(chunking_strategy="session")
 # locomo_qa_turn_benchmark = LoCoMoQABenchmark(chunking_strategy="turn")
 # locomo_qa_time_benchmark = LoCoMoQABenchmark(chunking_strategy="time_window")
