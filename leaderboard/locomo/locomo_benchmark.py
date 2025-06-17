@@ -8,6 +8,9 @@ Based on the paper: "Evaluating Very Long-Term Conversational Memory of LLM Agen
 by Maharana et al. (2024)
 """
 
+from datetime import time
+import os
+import tempfile
 from typing import List, Dict, Optional, Literal
 import json
 import asyncio
@@ -633,8 +636,6 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
         assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
         assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
         
-        print(f"Creating agent for sample {datum.sample_id}")
-        
         # Initialize lock for this sample_id if not exists
         if datum.sample_id not in self.template_agent_locks:
             self.template_agent_locks[datum.sample_id] = asyncio.Lock()
@@ -645,17 +646,32 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
                 print(f"Creating new data source for sample {datum.sample_id}")
                 source = await client.sources.create(
                     name=f"Conversation Context for {datum.sample_id}",
+                    embedding_config=agent_config["embedding_config"],
                     description=f"The conversation history, containing timestamped messages from {datum.speakers['speaker_a']} and {datum.speakers['speaker_b']}."
                 )
 
                 # prepare the conversation from datum as strings
                 conversation_chunks = self._create_conversation_string_with_timestamp(datum.conversation_history)
 
+                # save the conversation files to temporary directory
+                temp_dir = tempfile.mkdtemp()
+                
                 for content, timestamp in conversation_chunks:
-                    await client.sources.files.upload(
-                        source_id=source.id,
-                        file_name=(timestamp, content),
-                    )
+                    with open(os.path.join(temp_dir, f"{timestamp.replace(" ", "_")}.txt"), "w") as f:
+                        f.write(content)
+
+                    print(f"Uploading file {os.path.join(temp_dir, f"{timestamp.replace(" ", "_")}.txt")} for timestamp {timestamp}")
+    
+                    with open(os.path.join(temp_dir, f"{timestamp.replace(" ", "_")}.txt"), "rb") as f:
+                        job = await client.sources.files.upload(
+                            source_id=source.id,
+                            file=f,
+                        )
+
+                        while job.status != "completed":
+                            print(f"Waiting for job {job.id} to complete... Current status: {job.status}")
+                            time.sleep(1)
+                            job = await client.jobs.retrieve(job_id=job.id)
                 
                 self.data_source_ids[datum.sample_id] = source.id
             
@@ -663,6 +679,7 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
         print(f"Using data source {source_id} for sample {datum.sample_id}")
 
         # create a new agent for this sample_id, with file capabilities
+        agent_config.pop("agent_type", None)
         agent = await client.agents.create(
             agent_type="memgpt_v2_agent",
             include_base_tools=False,
