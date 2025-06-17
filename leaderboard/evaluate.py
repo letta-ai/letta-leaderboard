@@ -169,7 +169,6 @@ async def evaluate_concurrent(
         except Exception as e:
             now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             print(f"[red]Error in task: {e} at {now}[/red]")
-            print(traceback.format_exc())
             continue
 
         progress_bar.update(1)
