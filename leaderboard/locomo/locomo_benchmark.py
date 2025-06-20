@@ -8,9 +8,10 @@ Based on the paper: "Evaluating Very Long-Term Conversational Memory of LLM Agen
 by Maharana et al. (2024)
 """
 
-from datetime import time
+import time
 import os
 import tempfile
+import re
 from typing import List, Dict, Optional, Literal
 import json
 import asyncio
@@ -19,6 +20,7 @@ from pathlib import Path
 from letta_client import (
     CreateBlock,
     AsyncLetta,
+    EmbeddingConfig,
     LettaResponse,
     MessageCreate,
 )
@@ -89,7 +91,8 @@ class LoCoMoQABenchmark(Benchmark):
                 category = qa_item.get("category", "unknown")
                 if category == 5:
                     # Adversarial questions use "adversarial_answer"
-                    answer = qa_item.get("adversarial_answer", "")
+                    continue
+                    # answer = qa_item.get("adversarial_answer", "")
                 else:
                     # Regular questions use "answer"
                     answer = qa_item.get("answer", "")
@@ -541,6 +544,57 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
     def __init__(self, data_path: Optional[str] = None, chunking_strategy: Literal["turn", "session", "time_window"] = "session"):
         super().__init__(data_path, chunking_strategy)
         self.data_source_ids = {}
+        self.sample_file_paths = {}  # sample_id -> list of file paths
+        
+        # Create files for all samples during initialization
+        self._create_files_for_all_samples()
+
+    def _create_files_for_all_samples(self):
+        """Create conversation files for all samples during initialization."""
+        import os
+        from pathlib import Path
+        
+        # Create data directory if it doesn't exist
+        data_dir = Path("leaderboard/locomo/data")
+        data_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Group dataset by sample_id to avoid duplicates
+        samples_by_id = {}
+        for datum in self.dataset:
+            if datum.sample_id not in samples_by_id:
+                samples_by_id[datum.sample_id] = datum
+        
+        # Create files for each unique sample
+        for sample_id, datum in samples_by_id.items():
+            print(f"Creating files for sample {sample_id}")
+            
+            # Create sample-specific directory
+            sample_dir = data_dir / f"sample_{sample_id}"
+            sample_dir.mkdir(exist_ok=True)
+            
+            # Prepare conversation chunks with timestamps
+            conversation_chunks = self._create_conversation_string_with_timestamp(datum.conversation_history)
+            
+            # Create files for each chunk
+            file_paths = []
+            for i, (content, timestamp) in enumerate(conversation_chunks):
+                # Create reader-friendly filename
+                if timestamp:
+                    # Just use the timestamp as filename, replacing problematic characters
+                    filename = timestamp.replace("/", "-").replace(":", "-") + ".txt"
+                else:
+                    filename = f"session_{i+1:03d}.txt"
+                
+                file_path = sample_dir / filename
+                
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                file_paths.append(str(file_path))
+                print(f"Created file {file_path} for timestamp {timestamp}")
+            
+            # Store file paths for this sample
+            self.sample_file_paths[sample_id] = file_paths
+            print(f"Created {len(file_paths)} files for sample {sample_id}")
 
     def _create_conversation_string_with_timestamp(self, conversation_history: List[Dict]) -> list[tuple[str, str]]:
         """Create a list of (content, timestamp) tuples representing the conversation history."""
@@ -635,10 +689,17 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
         # Ensure agent_config contains required keys
         assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
         assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
-        
         # Initialize lock for this sample_id if not exists
         if datum.sample_id not in self.template_agent_locks:
             self.template_agent_locks[datum.sample_id] = asyncio.Lock()
+        
+        embedding_config = EmbeddingConfig(
+            embedding_model="text-embedding-3-large",
+            embedding_endpoint_type="openai",
+            embedding_endpoint="https://api.openai.com/v1",
+            embedding_dim=1536,
+            embedding_chunk_size=100000,
+        )
         
         async with self.template_agent_locks[datum.sample_id]:
             if datum.sample_id not in self.data_source_ids:
@@ -646,23 +707,17 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
                 print(f"Creating new data source for sample {datum.sample_id}")
                 source = await client.sources.create(
                     name=f"Conversation Context for {datum.sample_id}",
-                    embedding_config=agent_config["embedding_config"],
+                    embedding_config=embedding_config,
                     description=f"The conversation history, containing timestamped messages from {datum.speakers['speaker_a']} and {datum.speakers['speaker_b']}."
                 )
 
-                # prepare the conversation from datum as strings
-                conversation_chunks = self._create_conversation_string_with_timestamp(datum.conversation_history)
-
-                # save the conversation files to temporary directory
-                temp_dir = tempfile.mkdtemp()
+                # Upload the pre-created files
+                file_paths = self.sample_file_paths[datum.sample_id]
                 
-                for content, timestamp in conversation_chunks:
-                    with open(os.path.join(temp_dir, f"{timestamp.replace(" ", "_")}.txt"), "w") as f:
-                        f.write(content)
+                for file_path in file_paths:
+                    print(f"Uploading file {file_path}")
 
-                    print(f"Uploading file {os.path.join(temp_dir, f"{timestamp.replace(" ", "_")}.txt")} for timestamp {timestamp}")
-    
-                    with open(os.path.join(temp_dir, f"{timestamp.replace(" ", "_")}.txt"), "rb") as f:
+                    with open(file_path, "rb") as f:
                         job = await client.sources.files.upload(
                             source_id=source.id,
                             file=f,
@@ -680,12 +735,36 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
 
         # create a new agent for this sample_id, with file capabilities
         agent_config.pop("agent_type", None)
+        # no search_files tool now
+        memory_blocks = [
+            CreateBlock(
+                label="Task Instructions",
+                value="You are tasked with answering questions about conversation history."
+                        "The conversation history will be provided as a series of files. "
+                        "The files will only contain the conversation history, one person per line."
+                        "Read through all the conversation context carefully before answering any questions."
+                        "You can use the open_file, close_file, grep, search_files, and send_message tools to answer the question."
+                        "For grep, try multiple times if you did not find the answer in the file."
+                        "Please provide precise answers to the questions, do not hallucinate, and note the time! The timestamp is in the file name."
+                        "Always refer to a file to answer the question, do not make up information."
+                        "Avoid general searches, like just searching for a person's name."
+            )
+        ]
+
+        with open("leaderboard/locomo/locomo_agent.txt", "r") as f:
+            system_prompt = f.read()
+
         agent = await client.agents.create(
             agent_type="memgpt_v2_agent",
             include_base_tools=False,
-            tools=["open_file", "close_file", "grep", "search_files", "send_message"],
+            tools=["grep", "search_files", "send_message"],
+            # "open_file", "close_file",
+            # system=system_prompt,
+            # memory_blocks=memory_blocks,
             **agent_config,
         )
+
+        print(f"Created agent {agent.id} for sample {datum.sample_id}")
 
         # attach the source to the agent
         await client.agents.sources.attach(agent.id, source_id)
