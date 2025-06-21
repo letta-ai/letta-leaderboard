@@ -9,12 +9,23 @@ class Benchmark(metaclass=ABCMeta):
     dataset: list[Dotdict]
     benchmark_type: Literal["general", "feature"]
     create_agent_fun: Optional[Callable] = None
+    tool_functions: list[Callable] = []
+    tool_names: list[str] = []
 
     @abstractmethod
     async def setup_agent(
         self, datum: Dotdict, client: AsyncLetta, agent_id: str
     ) -> None:
         pass
+
+    async def setup_tools(self, client: AsyncLetta) -> None:
+        for tool_function in self.tool_functions:
+            client.tools.delete
+            tool = await client.tools.upsert_from_function(
+                func=tool_function
+            )
+            self.tool_names.append(tool.name)
+
 
     @abstractmethod
     async def metric(
