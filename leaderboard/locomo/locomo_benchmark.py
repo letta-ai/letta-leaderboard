@@ -16,13 +16,18 @@ from typing import List, Dict, Optional, Literal
 import json
 import asyncio
 from pathlib import Path
+from openai import AsyncOpenAI, OpenAI
+import concurrent.futures
 
 from letta_client import (
+    ContinueToolRule,
     CreateBlock,
     AsyncLetta,
     EmbeddingConfig,
+    InitToolRule,
     LettaResponse,
     MessageCreate,
+    TerminalToolRule,
 )
 from leaderboard.benchmark import Benchmark
 from leaderboard.evaluate import EvaluationResult
@@ -533,6 +538,19 @@ Just return the letter "A" or "B", with no text around it."""
             },
         )
 
+def answer_question(answer: str) -> str:
+    """
+    Returns the provided answer to the user.
+    Your answer should be as precise as possible. For example, "this month" is not precise, "June 2025" is precise.
+    
+    Args:
+        answer (str): The answer to return.
+        
+    Returns:
+        str: The provided answer.
+    """
+    return answer
+
 
 class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
     """
@@ -541,18 +559,23 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
     Similar to LoCoMoQABenchmark, but uses a file-based memory solution.
     """
 
-    def __init__(self, data_path: Optional[str] = None, chunking_strategy: Literal["turn", "session", "time_window"] = "session"):
+    def __init__(self, data_path: Optional[str] = None, chunking_strategy: Literal["turn", "session", "time_window", "secom"] = "session", use_summary: bool = False):
         super().__init__(data_path, chunking_strategy)
         self.data_source_ids = {}
         self.sample_file_paths = {}  # sample_id -> list of file paths
         
         # Create files for all samples during initialization
-        self._create_files_for_all_samples()
+        if chunking_strategy == "session":
+            self._create_files_for_all_samples(use_summary=use_summary)
+        elif chunking_strategy == "secom":
+            self._create_secom_files_for_all_samples()
+        self.tool_functions.append(answer_question)
 
-    def _create_files_for_all_samples(self):
-        """Create conversation files for all samples during initialization."""
+    def _create_secom_files_for_all_samples(self):
+        """Create SeCom-segmented conversation files for all samples during initialization."""
         import os
         from pathlib import Path
+        import concurrent.futures
         
         # Create data directory if it doesn't exist
         data_dir = Path("leaderboard/locomo/data")
@@ -564,9 +587,371 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
             if datum.sample_id not in samples_by_id:
                 samples_by_id[datum.sample_id] = datum
         
-        # Create files for each unique sample
+        # Collect all file creation tasks
+        file_creation_tasks = []
+        
+        # Prepare tasks for all samples
         for sample_id, datum in samples_by_id.items():
-            print(f"Creating files for sample {sample_id}")
+            print(f"Preparing SeCom segmented files for sample {sample_id}")
+            
+            # Initialize sample_file_paths for this sample
+            self.sample_file_paths[sample_id] = []
+            
+            # Create sample-specific directory
+            sample_dir = data_dir / f"sample_{sample_id}"
+            sample_dir.mkdir(exist_ok=True)
+            
+            # Check if summary file exists
+            summary_file = sample_dir / f"{sample_id}_segment_summary.txt"
+            if summary_file.exists():
+                print(f"Found existing segment summary for sample {sample_id}, skipping segmentation")
+                # Read filenames from summary file
+                with open(summary_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        filename = line.strip()
+                        if filename:
+                            file_path = sample_dir / filename
+                            self.sample_file_paths[sample_id].append(str(file_path))
+                continue
+            
+            # Get conversation segments using SeCom approach
+            conversation_segments = self._segment_conversation_secom(datum.conversation_history)
+            
+            # Create task for each segment and collect filenames
+            segment_filenames = []
+            for i, (content, timestamp) in enumerate(conversation_segments):
+                # Determine filename based on segment index
+                filename = f"segment_{i+1:03d}.txt"
+                if timestamp:
+                    filename = f"{timestamp.replace('/', '-').replace(':', '-')}_{i+1:03d}.txt"
+                
+                file_path = sample_dir / filename
+                segment_filenames.append(filename)
+                
+                # Add to sample_file_paths immediately
+                self.sample_file_paths[sample_id].append(str(file_path))
+                
+                # Only create task if file doesn't already exist
+                if not file_path.exists():
+                    file_creation_tasks.append({
+                        'sample_id': sample_id,
+                        'content': content,
+                        'timestamp': timestamp,
+                        'file_path': file_path,
+                        'segment_index': i
+                    })
+                else:
+                    print(f"File {file_path} already exists, skipping task creation")
+            
+            # Create summary file with segment filenames
+            with open(summary_file, 'w', encoding='utf-8') as f:
+                for filename in segment_filenames:
+                    f.write(f"{filename}\n")
+            print(f"Created segment summary file for sample {sample_id}: {len(segment_filenames)} segments")
+        
+        # Sort file paths for consistent ordering
+        for sample_id in self.sample_file_paths:
+            self.sample_file_paths[sample_id] = sorted(self.sample_file_paths[sample_id])
+            print(f"Sample {sample_id}: {len(self.sample_file_paths[sample_id])} SeCom segments prepared")
+
+        # Define the complete file creation function
+        def create_single_file(task_data):
+            """Create a single file with segment content."""
+            sample_id = task_data['sample_id']
+            content = task_data['content']
+            timestamp = task_data['timestamp']
+            file_path = task_data['file_path']
+            segment_index = task_data['segment_index']
+            
+            try:                
+                # Write file with timestamp and content
+                with open(file_path, "w", encoding="utf-8") as f:
+                    # Line 1: Timestamp or segment info
+                    if timestamp:
+                        f.write(f"Timestamp: {timestamp}\n")
+                    else:
+                        f.write(f"Segment {segment_index+1}\n")
+                    
+                    # Write the segment content
+                    f.write(content)
+                
+                print(f"Created SeCom segment file {file_path} for sample {sample_id}")
+                return True  # Successfully created
+                
+            except Exception as e:
+                print(f"Error creating SeCom segment file for sample {sample_id}: {e}")
+                return False  # Failed
+        
+        # Process all file creation tasks in parallel
+        print(f"Processing {len(file_creation_tasks)} SeCom file creation tasks in parallel...")
+        
+        # Execute file creation tasks in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+            # Submit all tasks
+            futures = [executor.submit(create_single_file, task) for task in file_creation_tasks]
+            
+            # Wait for all tasks to complete
+            for future in concurrent.futures.as_completed(futures):
+                future.result()  # Just ensure completion
+
+    def _segment_conversation_secom(self, conversation_history: List[Dict]) -> list[tuple[str, str]]:
+        """
+        Segment conversation using SeCom approach - topically coherent segments within sessions.
+        
+        Args:
+            conversation_history: List of conversation turns
+            
+        Returns:
+            List of (content, timestamp) tuples for each segment
+        """
+        if not conversation_history:
+            return []
+        
+        # First group by sessions (like the existing session-based approach)
+        sessions = self._group_conversation_by_sessions(conversation_history)
+        
+        # Apply SeCom segmentation within each session
+        all_segments = []
+        for session_turns in sessions:
+            session_segments = self._segment_single_session_secom(session_turns)
+            all_segments.extend(session_segments)
+        
+        return all_segments
+    
+    def _group_conversation_by_sessions(self, conversation_history: List[Dict]) -> List[List[Dict]]:
+        """Group conversation turns by session."""
+        sessions = []
+        current_session = None
+        current_session_turns = []
+        
+        for turn in conversation_history:
+            if turn['session'] != current_session:
+                # Save previous session if exists
+                if current_session_turns:
+                    sessions.append(current_session_turns)
+                
+                # Start new session
+                current_session = turn['session']
+                current_session_turns = [turn]
+            else:
+                current_session_turns.append(turn)
+        
+        # Add final session
+        if current_session_turns:
+            sessions.append(current_session_turns)
+        
+        return sessions
+    
+    def _segment_single_session_secom(self, session_turns: List[Dict]) -> list[tuple[str, str]]:
+        """
+        Apply SeCom segmentation to a single session.
+        
+        Args:
+            session_turns: List of turns from a single session
+            
+        Returns:
+            List of (content, timestamp) tuples for segments within this session
+        """
+        if not session_turns:
+            return []
+        
+        # If session is too short, treat as single segment
+        if len(session_turns) <= 3:
+            segment_content = self._format_segment_content(session_turns)
+            segment_timestamp = session_turns[0].get('timestamp', '')
+            return [(segment_content, segment_timestamp)]
+        
+        # Convert session to text format for segmentation
+        session_text = self._format_session_for_segmentation(session_turns)
+        
+        # Get segment boundaries using GPT-4 for this session
+        segment_boundaries = self._get_session_segments_sync(session_text, session_turns)
+        
+        # Create segments based on boundaries
+        segments = []
+        for start_idx, end_idx in segment_boundaries:
+            segment_turns = session_turns[start_idx:end_idx+1]
+            segment_content = self._format_segment_content(segment_turns)
+            segment_timestamp = segment_turns[0].get('timestamp', '') if segment_turns else ''
+            segments.append((segment_content, segment_timestamp))
+        
+        return segments
+    
+    def _format_session_for_segmentation(self, session_turns: List[Dict]) -> str:
+        """Format session turns for segmentation analysis."""
+        formatted_turns = []
+        for i, turn in enumerate(session_turns):
+            speaker = turn.get('speaker', 'Unknown')
+            text = turn.get('text', '')
+            # Add image context if available
+            if turn.get('img_url') and turn.get('blip_caption'):
+                text += f" [Image: {turn['blip_caption']}]"
+            formatted_turns.append(f"Turn {i+1}: {speaker}: {text}")
+        
+        return "\n".join(formatted_turns)
+    
+    def _get_session_segments_sync(self, session_text: str, session_turns: List[Dict]) -> List[tuple[int, int]]:
+        """
+        Use GPT-4 to identify topically coherent segments within a single session.
+        
+        Args:
+            session_text: Formatted session text
+            session_turns: Original session turns for context
+            
+        Returns:
+            List of (start_index, end_index) tuples for each segment within this session
+        """
+        try:
+            from openai import OpenAI
+            client = OpenAI()
+            
+            # Create segmentation prompt for a single session
+            segmentation_prompt = f"""You are a conversation segmentation expert. Your task is to identify topically coherent segments within a single conversation session.
+
+Given the following conversation session, identify natural segments where the topic or focus changes. Each segment should contain turns that are topically related.
+
+Instructions:
+1. Identify segments by looking for topic shifts, context changes, or natural conversation boundaries WITHIN this session
+2. Each segment should be coherent and focused on a specific topic or set of related topics
+3. Segments should be substantial enough to be meaningful.
+4. If the entire session is about one coherent topic, you can return it as a single segment
+5. Return the segments as a list of turn ranges in the format: "Start-End" (e.g., "1-5", "6-12", "13-18")
+6. Turn numbers start from 1 and refer to turns within this session only
+7. Avoid too short segments (e.g. just 1 or 2 turns)
+8  Segments should be longer if possible!
+
+Session to segment:
+{session_text}
+
+Please provide the segment boundaries as a comma-separated list of ranges (e.g., "1-5, 6-12, 13-18"):"""
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an expert at identifying topically coherent conversation segments within individual sessions."},
+                    {"role": "user", "content": segmentation_prompt}
+                ],
+                max_tokens=300,
+                temperature=0
+            )
+            
+            # Parse the response to get segment boundaries
+            segments_text = response.choices[0].message.content.strip()
+            return self._parse_segment_boundaries(segments_text, len(session_turns))
+            
+        except Exception as e:
+            print(f"Warning: Failed to get GPT-4 session segmentation: {e}")
+            # Fallback to simple heuristic segmentation for this session
+            return self._fallback_session_segmentation(session_turns)
+    
+    def _fallback_session_segmentation(self, session_turns: List[Dict]) -> List[tuple[int, int]]:
+        """Fallback segmentation for a single session when GPT-4 is not available."""
+        # Simple heuristic: segment every 8-10 turns within the session
+        segments = []
+        current_start = 0
+        segment_size = 8
+        
+        while current_start < len(session_turns):
+            end_idx = min(current_start + segment_size - 1, len(session_turns) - 1)
+            segments.append((current_start, end_idx))
+            current_start = end_idx + 1
+        
+        return segments if segments else [(0, len(session_turns) - 1)]
+    
+    def _parse_segment_boundaries(self, segments_text: str, total_turns: int) -> List[tuple[int, int]]:
+        """Parse GPT-4 response to extract segment boundaries."""
+        segments = []
+        
+        try:
+            # Extract ranges like "1-5, 6-12, 13-18"
+            ranges = [r.strip() for r in segments_text.split(',')]
+            
+            for range_str in ranges:
+                if '-' in range_str:
+                    start_str, end_str = range_str.split('-', 1)
+                    start_idx = max(0, int(start_str.strip()) - 1)  # Convert to 0-based
+                    end_idx = min(total_turns - 1, int(end_str.strip()) - 1)  # Convert to 0-based
+                    
+                    if start_idx <= end_idx:
+                        segments.append((start_idx, end_idx))
+            
+            # Ensure we cover all turns
+            if not segments:
+                segments = [(0, total_turns - 1)]
+            else:
+                # Fill any gaps
+                segments = sorted(segments)
+                filled_segments = []
+                current_end = -1
+                
+                for start, end in segments:
+                    if start > current_end + 1:
+                        # Fill gap
+                        filled_segments.append((current_end + 1, start - 1))
+                    filled_segments.append((start, end))
+                    current_end = end
+                
+                # Handle final gap
+                if current_end < total_turns - 1:
+                    filled_segments.append((current_end + 1, total_turns - 1))
+                
+                segments = filled_segments
+                
+        except Exception as e:
+            print(f"Warning: Failed to parse segment boundaries: {e}")
+            # Fallback to single segment
+            segments = [(0, total_turns - 1)]
+        
+        return segments
+    
+    def _format_segment_content(self, segment_turns: List[Dict]) -> str:
+        """Format a segment's turns into content string."""
+        turn_texts = []
+        
+        for turn in segment_turns:
+            speaker_text = f"{turn['speaker']}: {turn['text']}"
+            
+            # Add image context if available
+            if turn.get('img_url') and turn.get('blip_caption'):
+                speaker_text += f" [Image: {turn['blip_caption']}]"
+            
+            turn_texts.append(speaker_text)
+        
+        return "\n".join(turn_texts)
+        
+    def extract_last_message(self, response: LettaResponse) -> str:
+        """ Extract last answer_question tool response """
+        for message in response.messages[::-1]:
+            if message.message_type == "tool_return_message":
+                if message.name == "answer_question":
+                    return message.tool_return
+        return ""
+
+    def _create_files_for_all_samples(self, use_summary: bool = False):
+        """Create conversation files for all samples during initialization."""
+        import os
+        from pathlib import Path
+        import concurrent.futures
+        
+        # Create data directory if it doesn't exist
+        data_dir = Path("leaderboard/locomo/data")
+        data_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Group dataset by sample_id to avoid duplicates
+        samples_by_id = {}
+        for datum in self.dataset:
+            if datum.sample_id not in samples_by_id:
+                samples_by_id[datum.sample_id] = datum
+        
+        # Collect all file creation tasks
+        file_creation_tasks = []
+        
+        # Prepare tasks for all samples
+        for sample_id, datum in samples_by_id.items():
+            print(f"Preparing files for sample {sample_id}")
+            
+            # Initialize sample_file_paths for this sample
+            self.sample_file_paths[sample_id] = []
             
             # Create sample-specific directory
             sample_dir = data_dir / f"sample_{sample_id}"
@@ -575,26 +960,117 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
             # Prepare conversation chunks with timestamps
             conversation_chunks = self._create_conversation_string_with_timestamp(datum.conversation_history)
             
-            # Create files for each chunk
-            file_paths = []
+            # Create task for each chunk
             for i, (content, timestamp) in enumerate(conversation_chunks):
-                # Create reader-friendly filename
+                # Determine filename
                 if timestamp:
-                    # Just use the timestamp as filename, replacing problematic characters
                     filename = timestamp.replace("/", "-").replace(":", "-") + ".txt"
                 else:
                     filename = f"session_{i+1:03d}.txt"
                 
                 file_path = sample_dir / filename
                 
-                with open(file_path, "w", encoding="utf-8") as f:
-                    f.write(content)
-                file_paths.append(str(file_path))
-                print(f"Created file {file_path} for timestamp {timestamp}")
+                # Add to sample_file_paths immediately
+                self.sample_file_paths[sample_id].append(str(file_path))
+                
+                # Only create task if file doesn't already exist
+                if not file_path.exists():
+                    file_creation_tasks.append({
+                        'sample_id': sample_id,
+                        'content': content,
+                        'timestamp': timestamp,
+                        'file_path': file_path,
+                        'chunk_index': i
+                    })
+                else:
+                    print(f"File {file_path} already exists, skipping task creation")
+        
+        # Sort file paths for consistent ordering
+        for sample_id in self.sample_file_paths:
+            self.sample_file_paths[sample_id] = sorted(self.sample_file_paths[sample_id])
+            print(f"Sample {sample_id}: {len(self.sample_file_paths[sample_id])} files prepared")
+
+        # Define the complete file creation function
+        def create_single_file(task_data):
+            """Create a single file with all content and metadata."""
+            sample_id = task_data['sample_id']
+            content = task_data['content']
+            timestamp = task_data['timestamp']
+            file_path = task_data['file_path']
+            chunk_index = task_data['chunk_index']
             
-            # Store file paths for this sample
-            self.sample_file_paths[sample_id] = file_paths
-            print(f"Created {len(file_paths)} files for sample {sample_id}")
+            try:                
+                # Write file with timestamp, summary, and content
+                with open(file_path, "w", encoding="utf-8") as f:
+                    # Line 1: Timestamp
+                    if timestamp:
+                        f.write(f"Timestamp: {timestamp}\n")
+                    else:
+                        f.write(f"Session {chunk_index+1}\n")
+                    
+                    # Add summary after timestamp
+                    if use_summary:
+                        f.write(f"{self._get_content_summary_sync(content)}\n")
+                    
+                    # Original content
+                    f.write(content)
+                
+                print(f"Created file {file_path} for sample {sample_id}")
+                return True  # Successfully created
+                
+            except Exception as e:
+                print(f"Error creating file for sample {sample_id}: {e}")
+                return False  # Failed
+        
+        # Process all file creation tasks in parallel
+        print(f"Processing {len(file_creation_tasks)} file creation tasks in parallel...")
+        
+        # Execute file creation tasks in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+            # Submit all tasks
+            futures = [executor.submit(create_single_file, task) for task in file_creation_tasks]
+            
+            # Wait for all tasks to complete
+            for future in concurrent.futures.as_completed(futures):
+                future.result()  # Just ensure completion, we don't need the result since paths are already stored
+
+    def _get_content_summary_sync(self, content: str) -> str:
+        """Use OpenAI to summarize conversation content into topics and main points (synchronous)."""
+        try:
+            client = OpenAI()  # Use synchronous client
+            
+            prompt = f"""Summarize the following conversation content. Format your response as follows:
+1. First line: "Topics: [list all topics covered in this conversation separated by commas]"
+2. Following lines: "Main points:" followed by each main conversation point on a separate line, prefixed with "- "
+
+Be concise and focus on the key information exchanged.
+
+Conversation content:
+{content}"""
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that summarizes conversations concisely."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=500,
+                temperature=0
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            print(f"Warning: Failed to get OpenAI summary: {e}")
+            # Fallback to simple summary
+            lines = content.split('\n')
+            speakers = set()
+            for line in lines:
+                if ':' in line:
+                    speaker = line.split(':')[0].strip()
+                    speakers.add(speaker)
+            
+            return f"Topics: conversation between {', '.join(speakers)}\nMain points:\n- Conversation content (summary failed)"
 
     def _create_conversation_string_with_timestamp(self, conversation_history: List[Dict]) -> list[tuple[str, str]]:
         """Create a list of (content, timestamp) tuples representing the conversation history."""
@@ -700,7 +1176,9 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
             embedding_dim=1536,
             embedding_chunk_size=100000,
         )
-        
+
+        agent_config["embedding_config"] = embedding_config
+
         async with self.template_agent_locks[datum.sample_id]:
             if datum.sample_id not in self.data_source_ids:
                 # First time for this sample_id: create a source and upload files
@@ -714,19 +1192,31 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
                 # Upload the pre-created files
                 file_paths = self.sample_file_paths[datum.sample_id]
                 
+                # Upload all files first and collect jobs
+                jobs = []
                 for file_path in file_paths:
                     print(f"Uploading file {file_path}")
-
                     with open(file_path, "rb") as f:
                         job = await client.sources.files.upload(
                             source_id=source.id,
                             file=f,
                         )
-
-                        while job.status != "completed":
-                            print(f"Waiting for job {job.id} to complete... Current status: {job.status}")
-                            time.sleep(1)
-                            job = await client.jobs.retrieve(job_id=job.id)
+                        jobs.append(job)
+                
+                # Wait for all jobs to complete
+                while True:
+                    all_completed = True
+                    for job in jobs:
+                        updated_job = await client.jobs.retrieve(job_id=job.id)
+                        if updated_job.status not in ["completed", "failed"]:
+                            all_completed = False
+                            break
+                    
+                    if all_completed:
+                        break
+                    
+                    print(f"Waiting for {len(jobs)} jobs to complete...")
+                    time.sleep(1)
                 
                 self.data_source_ids[datum.sample_id] = source.id
             
@@ -741,13 +1231,17 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
                 label="Task Instructions",
                 value="You are tasked with answering questions about conversation history."
                         "The conversation history will be provided as a series of files. "
-                        "The files will only contain the conversation history, one person per line."
+                        "The files will only contain a summary of the conversation history, and the whole conversation."
                         "Read through all the conversation context carefully before answering any questions."
-                        "You can use the open_file, close_file, grep, search_files, and send_message tools to answer the question."
+                        "You can use the grep, search_files, and send_message tools to answer the question."
                         "For grep, try multiple times if you did not find the answer in the file."
                         "Please provide precise answers to the questions, do not hallucinate, and note the time! The timestamp is in the file name."
                         "Always refer to a file to answer the question, do not make up information."
                         "Avoid general searches, like just searching for a person's name."
+                        "Try directly search the question in the conversation first, before you try some other queries."
+                        "DO NOT RELY ON THE SUMMARY, IT IS NOT ACCURATE. WHEN IN DOUBE USE THE WHOLE CONVERSATION TO ANSWER THE QUESTION."
+                        "Your final send_message should be a precise and concise answer to the question, do not include any other information."
+                        "When expressing time, use a specific time."
             )
         ]
 
@@ -755,14 +1249,23 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
             system_prompt = f.read()
 
         agent = await client.agents.create(
-            agent_type="memgpt_v2_agent",
+            agent_type="locomo_agent",
             include_base_tools=False,
-            tools=["grep", "search_files", "send_message"],
-            # "open_file", "close_file",
-            # system=system_prompt,
+            tools=["search_files", "answer_question"],
+            # "grep", "open_file", "close_file",
+            system=system_prompt,
             # memory_blocks=memory_blocks,
+            tool_rules=[
+                TerminalToolRule(tool_name="answer_question"),
+                ContinueToolRule(tool_name="grep"),
+                ContinueToolRule(tool_name="search_files"),
+                InitToolRule(tool_name="search_files"),
+            ],
             **agent_config,
         )
+
+        all_tools = await client.agents.tools.list(agent_id=agent.id)
+        print(f"Agent {agent.id} created with tools {[tool.name for tool in all_tools]}")
 
         print(f"Created agent {agent.id} for sample {datum.sample_id}")
 
@@ -777,5 +1280,6 @@ class LoCoMoQAFileBenchmark(LoCoMoQABenchmark):
 # Benchmark instances for different chunking strategies
 locomo_qa_benchmark = LoCoMoQABenchmark(chunking_strategy="session")
 locomo_qa_benchmark_file = LoCoMoQAFileBenchmark(chunking_strategy="session")
+locomo_qa_benchmark_secom = LoCoMoQAFileBenchmark(chunking_strategy="secom")
 # locomo_qa_turn_benchmark = LoCoMoQABenchmark(chunking_strategy="turn")
 # locomo_qa_time_benchmark = LoCoMoQABenchmark(chunking_strategy="time_window")

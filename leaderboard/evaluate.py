@@ -97,7 +97,8 @@ async def evaluate_concurrent(
     client: AsyncLetta,
     create_agent_fun: Callable[[AsyncLetta, Any], asyncio.Future],
     timeout: int = 60,
-    max_concurrency: int = 16,
+    max_concurrency: int = 20,
+    debug: bool = False,
 ):
     total = len(benchmark.dataset)
     progress_bar = tqdm(total=total, desc=f"Score: 0/{total}")
@@ -109,7 +110,7 @@ async def evaluate_concurrent(
     total_score = 0
     history: dict[str, tuple[str, list, list]] = {}
 
-    MAX_RETRIES = 3
+    MAX_RETRIES = 10
 
     async def process_datum(datum: Any):
         agent_id = await create_agent_fun(client, datum)
@@ -121,8 +122,14 @@ async def evaluate_concurrent(
             m.model_dump(mode="json")
             for m in await client.agents.messages.list(agent_id=agent_id, limit=100)
         ]
-        predicted_answer = extract_last_message(response)
+        if hasattr(benchmark, "extract_last_message"):
+            predicted_answer = benchmark.extract_last_message(response)
+        else:
+            predicted_answer = extract_last_message(response)
         score = await benchmark.metric(predicted_answer, datum.answer, datum, agent_id)
+        if debug:
+            agent = await client.agents.retrieve(agent_id)
+            print(f"agent: {agent.name}, score: {score}, golden: {datum.answer}, predicted: {predicted_answer}")
         return (
             agent_id,
             score,
@@ -260,6 +267,12 @@ async def main():
         default="results",
         help="Result output parent directory name",
     )
+
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Debug mode",
+    )
     args = parser.parse_args()
 
     client_settings = {"base_url": args.letta_server}
@@ -275,7 +288,7 @@ async def main():
         model_config = json.load(f)
     llm_config = LlmConfig(**model_config)
     embedding_config = EmbeddingConfig(
-        embedding_model="text-embedding-ada-002",
+        embedding_model="text-embedding-3-large",
         embedding_endpoint_type="openai",
         embedding_endpoint="https://api.openai.com/v1",
         embedding_dim=1536,
@@ -305,6 +318,8 @@ async def main():
 
     benchmark.truncate_dataset(args.dataset_size)
 
+    await benchmark.setup_tools(client)
+
     for i in range(args.repeat_from, args.repeat):
         print(
             f"[green]Running eval {i + 1}/{args.repeat} for {args.benchmark_variable}[/green]"
@@ -315,6 +330,7 @@ async def main():
             create_base_agent_fun,
             timeout=args.timeout,
             max_concurrency=args.max_concurrency,
+            debug=args.debug,
         )
         out_dir = (
             f"{args.out_dir}/{args.benchmark}_{args.benchmark_variable}_{args.dataset_size}"
