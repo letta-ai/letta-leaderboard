@@ -4,6 +4,7 @@ import json
 import os
 import datetime
 import asyncio
+import traceback
 from typing import Callable, Any
 from tqdm import tqdm
 from rich import print
@@ -305,6 +306,14 @@ async def main():
             return create_base_agent(c, d, agent_config)
 
     benchmark.truncate_dataset(args.dataset_size)
+
+    # Setup sources if the benchmark supports it (e.g., LettaFileBenchmark)
+    if hasattr(benchmark, 'setup_sources'):
+        await benchmark.setup_sources(client, embedding_config)
+
+    # Setup required tools if the benchmark supports it (e.g., LettaFileBenchmark)
+    if hasattr(benchmark, 'setup_required_tools'):
+        await benchmark.setup_required_tools(client)
 
     for i in range(args.repeat_from, args.repeat):
         print(
