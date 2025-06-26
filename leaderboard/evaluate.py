@@ -311,6 +311,10 @@ async def main():
     if hasattr(benchmark, 'setup_sources'):
         await benchmark.setup_sources(client, embedding_config)
 
+    # Setup required tools if the benchmark supports it (e.g., LettaFileBenchmark)
+    if hasattr(benchmark, 'setup_required_tools'):
+        await benchmark.setup_required_tools(client)
+
     for i in range(args.repeat_from, args.repeat):
         print(
             f"[green]Running eval {i + 1}/{args.repeat} for {args.benchmark_variable}[/green]"

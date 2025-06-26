@@ -25,6 +25,7 @@ from leaderboard.utils import (
 class LettaFileBenchmark(Benchmark):
     def __init__(self):
         # Load dataset from file benchmark questions
+        self.required_tool_ids = None
         self.source_id = None
         raw = load_dataset(
             "json",
@@ -64,10 +65,18 @@ class LettaFileBenchmark(Benchmark):
 
         return data
 
+    async def setup_required_tools(self, client: AsyncLetta):
+        # Get required tool_ids
+        required_tool_names = {"send_message", "open_file", "grep"}
+        self.required_tool_ids = []
+        for tool_name in required_tool_names:
+            tools = await client.tools.list(name=tool_name)
+            self.required_tool_ids.append(tools[0].id)
+
     async def setup_sources(self, client: AsyncLetta, embedding_config: EmbeddingConfig, force_refresh=False):
         try:
             self.source_id = await client.sources.retrieve_by_name(self.source_name)
-        except:
+        except Exception:
             self.source_id = None
 
         if force_refresh or not self.source_id:
@@ -161,47 +170,8 @@ class LettaFileBenchmark(Benchmark):
         # Ensure agent_config contains required keys
         assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
         assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
-        
-        return (
-            await client.agents.create(**agent_config)
-        ).id
-
-    async def get_response(
-        self, client: AsyncLetta, agent_id: str, datum: Dotdict
-    ) -> LettaResponse:
-        return await super().get_response(client, agent_id, datum)
-
-    async def metric(
-        self, predicted: str, true: str, datum: Dotdict, agent_id: str
-    ) -> float:
-        """
-        Grade file benchmark responses using LLM judge
-        """
-        result = await grade_sample(datum.message, true, predicted)
-        return 1.0 if result == "A" else 0.0
-
-
-class FileOpenBenchmark(LettaFileBenchmark):
-    """
-    Benchmark for testing file opening and reading capabilities
-    Tests the agent's ability to use the open_file tool to read file contents
-    and answer questions based on the information found in those files
-    """
-
-    async def create_agent_fun(
-        self,
-        client: AsyncLetta,
-        datum: Dotdict,
-        agent_config: dict,
-    ) -> str:
-        """
-        Create agent configured with file system access and open_file tool
-        """
-        # Ensure agent_config contains required keys
-        assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
-        assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
         assert self.source_id, "Did you forget to setup sources?"
-        
+
         # TODO: Create memory block with file system information
         # This should inform the agent about available files and how to use open_file tool
         file_system_block = CreateBlock(
@@ -227,7 +197,7 @@ class FileOpenBenchmark(LettaFileBenchmark):
         # Clean question text to only contain alphanumeric and underscores
         question_preview = "".join(c if c.isalnum() else "_" for c in datum.message[:30])
         agent_name = f"file_bench_{question_preview}_{str(uuid.uuid4())[:8]}"
-        
+
         agent = await client.agents.create(
             name=agent_name,
             memory_blocks=[file_system_block],
@@ -235,17 +205,29 @@ class FileOpenBenchmark(LettaFileBenchmark):
             **agent_config,
             include_base_tools=False,
         )
-
-        # Attach send_message and open_file tool
-        required_tool_names = {"send_message", "open_file"}
-        for tool_name in required_tool_names:
-            tools = await client.tools.list(name=tool_name)
-            await client.agents.tools.attach(
-                agent_id=agent.id,
-                tool_id=tools[0].id
-            )
-
         return agent.id
+
+    async def get_response(
+        self, client: AsyncLetta, agent_id: str, datum: Dotdict
+    ) -> LettaResponse:
+        return await super().get_response(client, agent_id, datum)
+
+    async def metric(
+        self, predicted: str, true: str, datum: Dotdict, agent_id: str
+    ) -> float:
+        """
+        Grade file benchmark responses using LLM judge
+        """
+        result = await grade_sample(datum.message, true, predicted)
+        return 1.0 if result == "A" else 0.0
+
+
+class FileOpenBenchmark(LettaFileBenchmark):
+    """
+    Benchmark for testing file opening and reading capabilities
+    Tests the agent's ability to use the open_file tool to read file contents
+    and answer questions based on the information found in those files
+    """
 
     async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str):
         """
@@ -253,6 +235,10 @@ class FileOpenBenchmark(LettaFileBenchmark):
         """
         # Store the datum mapping for usage statistics
         self.agent_datum_mapping[agent_id] = datum
+
+        # Attach only tools
+        await client.agents.modify(agent_id=agent_id, tool_ids=self.required_tool_ids)
+
 
     async def get_usage_statistics(
         self,
