@@ -31,11 +31,19 @@ COMPARISON QUESTION EXAMPLES:
 - "Who has more credit cards, {person1_name} or {person2_name}?"
 - "Do {person1_name} and {person2_name} have the same blood type?"
 
+EXAMPLE ANSWERS FOR TIE SITUATIONS:
+- If both people have 3 credit cards: Answer = "Tie" (NOT an arbitrary name)
+- If both people have 2 vehicles: Answer = "Both have the same" (NOT picking one person)
+- If both people have 1 pet: Answer = "Tie" (NOT choosing randomly)
+
 CRITICAL ANSWER REQUIREMENTS:
 - Each question must have exactly ONE singular answer
 - NO compound questions asking for multiple pieces of information
 - NO questions with "and" requiring multiple answers
 - Answers should be simple values: a name, yes/no, etc.
+- For "who has more" questions: If both people have the same amount, answer "Tie" or "Both have the same"
+- NEVER pick an arbitrary winner when the comparison results in equal values
+- In reasoning steps: When counts are equal, explicitly state "Both have the same number" and explain why the answer is "Tie"
 
 PERSON 1 DATA:
 {person1_data}
