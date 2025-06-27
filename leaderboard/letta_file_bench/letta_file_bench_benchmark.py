@@ -67,7 +67,7 @@ class LettaFileBenchmark(Benchmark):
 
     async def setup_required_tools(self, client: AsyncLetta):
         # Get required tool_ids
-        required_tool_names = {"send_message", "open_file", "grep"}
+        required_tool_names = {"send_message", "open_files", "grep_files"}
         self.required_tool_ids = []
         for tool_name in required_tool_names:
             tools = await client.tools.list(name=tool_name)
@@ -173,7 +173,7 @@ class LettaFileBenchmark(Benchmark):
         assert self.source_id, "Did you forget to setup sources?"
 
         # TODO: Create memory block with file system information
-        # This should inform the agent about available files and how to use open_file tool
+        # This should inform the agent about available files and how to use open_files tool
         file_system_block = CreateBlock(
             label="File System",
             value=(
@@ -188,7 +188,7 @@ class LettaFileBenchmark(Benchmark):
                 "- insurance_policies.txt: Contains insurance information linked to person_id\n"
                 "- employments.txt: Contains employment information linked to person_id\n"
                 "- addresses.txt: Contains address information linked to person_id\n\n"
-                "Use the open_file tool to read these files when answering questions. "
+                "Use the open_files tool to read these files when answering questions. "
                 "You may need to read multiple files to find all the information needed."
             )
         )
@@ -225,7 +225,7 @@ class LettaFileBenchmark(Benchmark):
 class FileOpenBenchmark(LettaFileBenchmark):
     """
     Benchmark for testing file opening and reading capabilities
-    Tests the agent's ability to use the open_file tool to read file contents
+    Tests the agent's ability to use the open_files tool to read file contents
     and answer questions based on the information found in those files
     """
 
@@ -255,7 +255,7 @@ class FileOpenBenchmark(LettaFileBenchmark):
                 # TODO: Track file-specific usage statistics
                 # Examples:
                 # "files_opened": number of unique files opened
-                # "total_file_operations": total open_file calls
+                # "total_file_operations": total open_files calls
                 # "average_files_per_question": avg files opened per question
             },
             {
