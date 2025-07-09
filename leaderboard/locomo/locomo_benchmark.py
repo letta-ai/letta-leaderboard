@@ -18,7 +18,6 @@ import concurrent.futures
 
 from letta_client import (
     ContinueToolRule,
-    CreateBlock,
     AsyncLetta,
     EmbeddingConfig,
     InitToolRule,
@@ -26,7 +25,6 @@ from letta_client import (
     TerminalToolRule,
 )
 from leaderboard.benchmark import Benchmark
-from leaderboard.evaluate import EvaluationResult
 from leaderboard.utils import (
     Dotdict,
     grade_sample,
@@ -258,7 +256,6 @@ class LoCoMoQAFileBenchmark(Benchmark):
         # Define the complete file creation function
         def create_single_file(task_data):
             """Create a single file with segment content."""
-            sample_id = task_data["sample_id"]
             content = task_data["content"]
             timestamp = task_data["timestamp"]
             file_path = task_data["file_path"]
@@ -278,7 +275,7 @@ class LoCoMoQAFileBenchmark(Benchmark):
 
                 return True  # Successfully created
 
-            except Exception as e:
+            except Exception:
                 return False  # Failed
 
         # Execute file creation tasks in parallel
@@ -413,8 +410,6 @@ class LoCoMoQAFileBenchmark(Benchmark):
             List of (start_index, end_index) tuples for each segment within this session
         """
         try:
-            from openai import OpenAI
-
             client = OpenAI()
 
             # Create segmentation prompt for a single session
@@ -454,7 +449,7 @@ Please provide the segment boundaries as a comma-separated list of ranges (e.g.,
             segments_text = response.choices[0].message.content.strip()
             return self._parse_segment_boundaries(segments_text, len(session_turns))
 
-        except Exception as e:
+        except Exception:
             # Fallback to simple heuristic segmentation for this session
             return self._fallback_session_segmentation(session_turns)
 

@@ -12,7 +12,6 @@ class Benchmark(metaclass=ABCMeta):
     tool_functions: list[Callable] = []
     tool_names: list[str] = []
 
-    @abstractmethod
     async def setup_agent(
         self, datum: Dotdict, client: AsyncLetta, agent_id: str
     ) -> None:
