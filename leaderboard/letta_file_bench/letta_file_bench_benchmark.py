@@ -96,7 +96,7 @@ class LettaFileBenchmark(Benchmark):
             self.source_id = source.id
 
             # Load all .jsonl files from the data directory (excluding questions file)
-            data_dir = Path("/Users/mattzhou/letta-leaderboard/leaderboard/letta_file_bench/data")
+            data_dir = Path("leaderboard/letta_file_bench/data")
             jsonl_files = [f for f in data_dir.glob("*.jsonl") if f.name != "llm_generated_questions.jsonl"]
             
             await self._upload_files_concurrent(client, jsonl_files)
