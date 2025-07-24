@@ -172,58 +172,6 @@ class LettaFileBenchmark(Benchmark):
         assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
         assert self.source_id, "Did you forget to setup sources?"
 
-        # # Create detailed memory block with comprehensive file schemas
-        # file_system_block = CreateBlock(
-        #     label="Personal Data Repository Schema",
-        #     description="Schema reference for a personal data repository with 10 JSONL files containing structured information about people and their associated records (vehicles, financial data, pets, medical records, etc.). Each file contains JSON objects linked by person_id/owner_id. Use open_files tool to read files based on question requirements.",
-        #     value=(
-        #         "## FILE SCHEMAS\n\n"
-        #
-        #         "### people.jsonl - Master Person Directory\n"
-        #         "Schema: {\"full_name\": str, \"person_id\": str, \"dob\": str, \"email\": str, \"phone\": str}\n"
-        #         "Example: {\"full_name\":\"Robert Smith\",\"person_id\":\"pers-0001\",\"dob\":\"1945-04-05\",\"email\":\"user@example.net\",\"phone\":\"(825)416-4829\"}\n\n"
-        #
-        #         "### vehicles.jsonl - Vehicle Registration Records\n"
-        #         "Schema: {\"vehicle_id\": str, \"owner_id\": str, \"make\": str, \"model\": str, \"year\": int, \"license_plate\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "### bank_accounts.jsonl - Banking Information\n"
-        #         "Schema: {\"account_id\": str, \"owner_id\": str, \"bank_name\": str, \"routing\": str, \"account_no\": str, \"balance\": float, \"currency\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "### credit_cards.jsonl - Credit Card Records\n"
-        #         "Schema: {\"card_id\": str, \"owner_id\": str, \"provider\": str, \"number\": str, \"expire\": str, \"cvc\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "### pets.jsonl - Pet Ownership Records\n"
-        #         "Schema: {\"pet_id\": str, \"owner_id\": str, \"name\": str, \"species\": str, \"breed\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "### medical_records.jsonl - Health & Medical Data\n"
-        #         "Schema: {\"record_id\": str, \"owner_id\": str, \"ssn\": str, \"blood_type\": str, \"condition\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "### addresses.jsonl - Address Directory\n"
-        #         "Schema: {\"address_id\": str, \"owner_id\": str, \"street\": str, \"city\": str, \"state\": str, \"postal_code\": str, \"country\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n"
-        #         "Note: Individuals may have multiple addresses\n\n"
-        #
-        #         "### employments.jsonl - Employment History\n"
-        #         "Schema: {\"employment_id\": str, \"owner_id\": str, \"employer\": str, \"job_title\": str, \"start_date\": str, \"salary\": float, \"currency\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "### insurance_policies.jsonl - Insurance Coverage\n"
-        #         "Schema: {\"policy_id\": str, \"owner_id\": str, \"insurer\": str, \"policy_type\": str, \"policy_number\": str, \"expires\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "### internet_accounts.jsonl - Online Account Information\n"
-        #         "Schema: {\"net_id\": str, \"owner_id\": str, \"username\": str, \"email\": str, \"url\": str, \"password\": str}\n"
-        #         "Linkage: owner_id field contains person_id\n\n"
-        #
-        #         "Use the open_files tool to read these JSONL files when answering questions. Each line in a JSONL file is a separate JSON object. You may need to read multiple files to find all the information needed."
-        #     )
-        # )
-
         # Create unique agent name with question preview and UUID
         # Clean question text to only contain alphanumeric and underscores
         question_preview = "".join(c if c.isalnum() else "_" for c in datum.message[:30])
@@ -231,7 +179,6 @@ class LettaFileBenchmark(Benchmark):
 
         agent = await client.agents.create(
             name=agent_name,
-            # memory_blocks=[file_system_block],
             source_ids=[self.source_id],
             **agent_config,
             include_base_tools=False,
