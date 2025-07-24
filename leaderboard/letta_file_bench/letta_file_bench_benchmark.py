@@ -6,12 +6,12 @@ from typing import List, Dict
 from tqdm import tqdm
 
 from letta_client import (
-    CreateBlock,
     AsyncLetta,
     LettaMessageUnion,
     LettaResponse,
     EmbeddingConfig, RequiredBeforeExitToolRule,
 )
+from leaderboard.letta_file_bench.config import CONFIG
 from leaderboard.benchmark import Benchmark
 from datasets import load_dataset
 from leaderboard.evaluate import EvaluationResult
@@ -23,10 +23,11 @@ from leaderboard.utils import (
 
 
 class LettaFileBenchmark(Benchmark):
-    def __init__(self):
+    def __init__(self, use_jsonl: bool = True):
         # Load dataset from file benchmark questions
         self.required_tool_ids = None
         self.source_id = None
+        self.use_jsonl = use_jsonl
         raw = load_dataset(
             "json",
             data_files="leaderboard/letta_file_bench/data/llm_generated_questions.jsonl",
@@ -39,7 +40,7 @@ class LettaFileBenchmark(Benchmark):
         
         self.dataset = self._build_dataset()
         self.benchmark_type = "feature"
-        self.source_name = "file_benchmark_data"
+        self.source_name = f"file_benchmark_data_{'jsonl' if use_jsonl else 'txt'}"
 
     def _build_dataset(self) -> List[Dotdict]:
         """
@@ -65,14 +66,6 @@ class LettaFileBenchmark(Benchmark):
 
         return data
 
-    async def setup_required_tools(self, client: AsyncLetta):
-        # Get required tool_ids
-        required_tool_names = {"send_message", "open_files", "grep_files"}
-        self.required_tool_ids = []
-        for tool_name in required_tool_names:
-            tools = await client.tools.list(name=tool_name)
-            self.required_tool_ids.append(tools[0].id)
-
     async def setup_sources(self, client: AsyncLetta, embedding_config: EmbeddingConfig, force_refresh=False):
         try:
             self.source_id = await client.sources.retrieve_by_name(self.source_name)
@@ -86,24 +79,29 @@ class LettaFileBenchmark(Benchmark):
 
             # Create source
             print(f"[LettaFileBenchmark] Creating new source: {self.source_name}")
+            file_format = "JSONL" if self.use_jsonl else "TXT"
             source = await client.sources.create(
                 name=self.source_name,
-                embedding_chunk_size=512,
+                embedding_chunk_size=CONFIG.agent.embedding_chunk_size,
                 embedding_config=embedding_config,
-                description="Structured personal data repository in JSONL format containing information about people, vehicles, pets, bank accounts, credit cards, medical records, internet accounts, insurance policies, employment records, and addresses.",
+                description=f"Structured personal data repository in {file_format} format containing information about people, vehicles, pets, bank accounts, credit cards, medical records, internet accounts, insurance policies, employment records, and addresses.",
                 instructions="Use this data to answer questions about individuals and their associated records. When searching, use person names or IDs to find related information across different files. Cross-reference between files using person_id when needed.",
             )
             self.source_id = source.id
 
-            # Load all .jsonl files from the data directory (excluding questions file)
+            # Load files based on the flag (excluding questions file)
             data_dir = Path("leaderboard/letta_file_bench/data")
-            jsonl_files = [f for f in data_dir.glob("*.jsonl") if f.name != "llm_generated_questions.jsonl"]
+            file_extension = "*.jsonl" if self.use_jsonl else "*.txt"
+            data_files = [f for f in data_dir.glob(file_extension) if f.name != "llm_generated_questions.jsonl"]
             
-            await self._upload_files_concurrent(client, jsonl_files)
+            await self._upload_files_concurrent(client, data_files)
         else:
             print(f"[LettaFileBenchmark] Using existing source: {self.source_id}")
 
-    async def _upload_file_and_wait(self, client: AsyncLetta, file_path: Path, max_wait: int = 30):
+    async def _upload_file_and_wait(self, client: AsyncLetta, file_path: Path, max_wait: int = None):
+        """Upload a single file and wait for processing to complete"""
+        if max_wait is None:
+            max_wait = CONFIG.upload.timeout_seconds
         """Upload a single file and wait for processing to complete"""
         with open(file_path, "rb") as f:
             file_metadata = await client.sources.files.upload(
@@ -182,8 +180,14 @@ class LettaFileBenchmark(Benchmark):
             source_ids=[self.source_id],
             **agent_config,
             include_base_tools=False,
-            tool_rules=[RequiredBeforeExitToolRule(tool_name="send_message")]
+            tool_rules=[RequiredBeforeExitToolRule(tool_name="send_message")],
+            max_files_open=CONFIG.agent.max_files_open,
+            per_file_view_window_char_limit=CONFIG.agent.per_file_view_window_char_limit
         )
+
+        # close all the files
+        await client.agents.files.close_all(agent_id=agent.id)
+
         return agent.id
 
     async def get_response(
@@ -207,6 +211,17 @@ class FileOpenBenchmark(LettaFileBenchmark):
     Tests the agent's ability to use the open_files tool to read file contents
     and answer questions based on the information found in those files
     """
+    
+    def __init__(self, use_jsonl: bool = True):
+        super().__init__(use_jsonl=use_jsonl)
+
+    async def setup_required_tools(self, client: AsyncLetta):
+        # Get required tool_ids
+        required_tool_names = {"send_message", "open_files", "grep_files"}
+        self.required_tool_ids = []
+        for tool_name in required_tool_names:
+            tools = await client.tools.list(name=tool_name)
+            self.required_tool_ids.append(tools[0].id)
 
     async def setup_agent(self, datum: Dotdict, client: AsyncLetta, agent_id: str):
         """
@@ -249,5 +264,6 @@ class FileOpenBenchmark(LettaFileBenchmark):
         )
 
 
-# Benchmark instance for evaluation system
-file_open_benchmark = FileOpenBenchmark()
+# Benchmark instances for evaluation system
+file_open_benchmark = FileOpenBenchmark(use_jsonl=True)
+file_open_benchmark_txt = FileOpenBenchmark(use_jsonl=False)
