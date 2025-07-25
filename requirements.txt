@@ -4,3 +4,4 @@ datasets
 ruff
 faker
 openai
+jinja2
