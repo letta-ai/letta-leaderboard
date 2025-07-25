@@ -16,6 +16,7 @@ from typing import List, Dict, Any, Tuple
 import asyncio
 
 from anthropic import Anthropic
+from jinja2 import Template
 from leaderboard.letta_file_bench.tools.sql_execute_tool import SQLExecuteTool
 from leaderboard.letta_file_bench.tools.register_question_tool import RegisterQuestionTool
 
@@ -56,10 +57,20 @@ class QuestionGeneratorAgent:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         self.client = Anthropic(api_key=api_key)
         
-        # Load system prompt
-        prompt_path = Path(__file__).parent / "prompts" / "agent_system_prompt.txt"
+        # Load and render system prompt template
+        prompt_path = Path(__file__).parent / "prompts" / "agent_system_prompt.j2"
         with open(prompt_path, 'r') as f:
-            self.system_prompt = f.read()
+            prompt_template = Template(f.read())
+        
+        # Get database overview
+        db_overview = self.sql_tool.get_database_overview()
+        
+        # Render the template with dynamic data
+        self.system_prompt = prompt_template.render(
+            schema=db_overview["schema"],
+            statistics=db_overview["statistics"],
+            sample_ids=db_overview["sample_ids"]
+        )
         
         # Track token usage
         self.total_tokens = {"input": 0, "output": 0}
