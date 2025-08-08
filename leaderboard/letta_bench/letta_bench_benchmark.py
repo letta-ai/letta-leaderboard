@@ -199,6 +199,8 @@ class CoreMemoryReadBenchmark(LettaBenchmark):
         # Ensure agent_config contains required keys
         assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
         assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+
+        agent_config["include_base_tool_rules"] = True 
         
         block = CreateBlock(
             label="Supporting Facts",
