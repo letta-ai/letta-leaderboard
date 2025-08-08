@@ -1,6 +1,8 @@
 import asyncio
 import time
 import uuid
+import json
+import os
 from pathlib import Path
 from typing import List, Dict
 from tqdm import tqdm
@@ -13,7 +15,7 @@ from letta_client import (
 )
 from leaderboard.letta_file_bench.config import CONFIG
 from leaderboard.benchmark import Benchmark
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from leaderboard.evaluate import EvaluationResult
 from leaderboard.utils import (
     Dotdict,
@@ -23,15 +25,44 @@ from leaderboard.utils import (
 
 
 class LettaFileBenchmark(Benchmark):
-    def __init__(self, use_jsonl: bool = True):
+    def __init__(self, use_jsonl: bool = True, questions_file: str = None):
         # Load dataset from file benchmark questions
         self.required_tool_ids = None
         self.source_id = None
         self.use_jsonl = use_jsonl
-        raw = load_dataset(
-            "json",
-            data_files="leaderboard/letta_file_bench/data/llm_generated_questions.jsonl",
-        )["train"]
+        
+        # First load the data manually to handle complex structures
+        if questions_file:
+            questions_file = Path(questions_file)
+        else:
+            questions_file = Path("leaderboard/letta_file_bench/data/evaluated_questions/accepted_questions.jsonl")
+        
+        print(f"[LettaFileBenchmark] Loading questions from: {questions_file}")
+        simplified_data = []
+        
+        if not questions_file.exists():
+            print(f"[LettaFileBenchmark] Warning: Questions file not found: {questions_file}")
+            # Create empty dataset for now - will be populated when actually used
+            simplified_data = []
+        else:
+            with open(questions_file, 'r') as f:
+                for line_num, line in enumerate(f, 1):
+                    if line.strip():
+                        try:
+                            item = json.loads(line)
+                            # Extract only the fields needed for evaluation
+                            simplified_data.append({
+                                "question": item["question"],
+                                "answer": item["answer"]
+                            })
+                        except (json.JSONDecodeError, KeyError) as e:
+                            raise ValueError(f"Error parsing line {line_num} in {questions_file}: {e}")
+        
+        if not simplified_data:
+            raise ValueError(f"No valid questions found in {questions_file}")
+        
+        # Create dataset from simplified data
+        raw = Dataset.from_list(simplified_data)
         self.raw_datasets = raw
         
         # Track file-specific agent interactions
@@ -45,7 +76,7 @@ class LettaFileBenchmark(Benchmark):
     def _build_dataset(self) -> List[Dotdict]:
         """
         Build dataset from raw file benchmark data
-        Each item contains a question, answer, required files, and reasoning steps
+        Each item only needs question and answer for evaluation
         """
         data: List[Dotdict] = []
 
@@ -56,10 +87,6 @@ class LettaFileBenchmark(Benchmark):
                         "message": raw_datum["question"],
                         "message_list": [raw_datum["question"]],
                         "answer": raw_datum["answer"],
-                        "difficulty": raw_datum["difficulty"],
-                        "question_type": raw_datum["question_type"],
-                        "required_files": raw_datum["required_files"],
-                        "reasoning_steps": raw_datum["reasoning_steps"],
                     }
                 )
             )
@@ -92,7 +119,7 @@ class LettaFileBenchmark(Benchmark):
             # Load files based on the flag (excluding questions file)
             data_dir = Path("leaderboard/letta_file_bench/data")
             file_extension = "*.jsonl" if self.use_jsonl else "*.txt"
-            data_files = [f for f in data_dir.glob(file_extension) if f.name != "llm_generated_questions.jsonl"]
+            data_files = [f for f in data_dir.glob(file_extension) if f.name not in ["llm_generated_questions.jsonl", "agent_generated_questions.jsonl"]]
             
             await self._upload_files_concurrent(client, data_files)
         else:
@@ -212,8 +239,8 @@ class FileOpenBenchmark(LettaFileBenchmark):
     and answer questions based on the information found in those files
     """
     
-    def __init__(self, use_jsonl: bool = True):
-        super().__init__(use_jsonl=use_jsonl)
+    def __init__(self, use_jsonl: bool = True, questions_file: str = None):
+        super().__init__(use_jsonl=use_jsonl, questions_file=questions_file)
 
     async def setup_required_tools(self, client: AsyncLetta):
         # Get required tool_ids
@@ -254,9 +281,8 @@ class FileOpenBenchmark(LettaFileBenchmark):
             },
             {
                 agent_id: {
-                    "required_files": self.agent_datum_mapping[agent_id].required_files,
-                    "question_type": self.agent_datum_mapping[agent_id].question_type,
-                    "difficulty": self.agent_datum_mapping[agent_id].difficulty,
+                    "question": self.agent_datum_mapping[agent_id].message,
+                    "answer": self.agent_datum_mapping[agent_id].answer,
                 }
                 for agent_id in agent_ids 
                 if agent_id in self.agent_datum_mapping
@@ -264,6 +290,16 @@ class FileOpenBenchmark(LettaFileBenchmark):
         )
 
 
-# Benchmark instances for evaluation system
-file_open_benchmark = FileOpenBenchmark(use_jsonl=True)
-file_open_benchmark_txt = FileOpenBenchmark(use_jsonl=False)
+# Benchmark instances for evaluation system - removed default instances since questions_file is required
+
+# Factory function for creating benchmarks with custom questions file
+def create_file_open_benchmark(questions_file: str = None, use_jsonl: bool = True):
+    return FileOpenBenchmark(use_jsonl=use_jsonl, questions_file=questions_file)
+
+# For backward compatibility, create a placeholder that will error if used
+class _FileOpenBenchmarkPlaceholder:
+    def __init__(self):
+        raise ValueError("file_open_benchmark requires --questions_file parameter. Use: python -m leaderboard.evaluate --benchmark=letta_file_bench --questions_file=<path_to_questions.jsonl>")
+
+file_open_benchmark = _FileOpenBenchmarkPlaceholder
+file_open_benchmark_txt = _FileOpenBenchmarkPlaceholder
