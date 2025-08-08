@@ -48,3 +48,50 @@ data_generation:
 utils:
   max_uniqueness_attempts: 100
   json_indent: 2
+
+# Agent question generator configuration
+agent_question_generator:
+  # Claude's context window limits
+  max_context_tokens: 150000  # Conservative limit for Claude Sonnet
+  trim_threshold: 140000      # Start trimming when we hit this
+  
+  # Model configuration
+  default_model: "claude-sonnet-4-20250514"
+  
+  # Token usage display
+  max_tokens_per_response: 4096
+  
+  # Generation parameters
+  max_iterations_per_question: 50  # Increased to allow more exploration
+  force_registration_on_max_iterations: true
+  
+  # LLM summarization settings
+  summary_max_tokens: 500
+  summary_temperature: 0.3
+  summary_max_conversation_items: 30  # Max conversation items to include in summary
+  
+  # Display settings
+  separator_length: 80
+  truncate_sql_display_length: 100
+  truncate_result_rows: 3
+  truncate_result_string_length: 200
+  
+  # Session settings
+  messages_to_keep_on_trim: 6  # Keep last N messages when trimming
+  
+  # Question quality requirements
+  min_sql_queries_per_question: 2  # Minimum number of SQL queries required
+  max_sql_queries_per_question: 4  # Maximum to keep it focused
+  require_natural_language: true    # Questions must sound conversational
+
+# Agent question evaluator configuration  
+agent_question_evaluator:
+  # Model configuration
+  default_model: "claude-sonnet-4-20250514"
+  
+  # Evaluation settings
+  max_concurrent_evaluations: 5      # Number of questions to evaluate in parallel
+  evaluation_prompt_style: "analytical"  # Style of evaluation: "analytical" or "conversational"
+  
+  # Token limits
+  max_tokens_per_evaluation: 2048    # Max tokens for each evaluation response

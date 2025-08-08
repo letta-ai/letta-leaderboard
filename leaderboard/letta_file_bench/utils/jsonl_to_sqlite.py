@@ -9,7 +9,6 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, List, Any
 import argparse
-from tqdm import tqdm
 
 
 def create_tables(conn: sqlite3.Connection):
@@ -60,10 +59,9 @@ def create_tables(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS employments (
             employment_id TEXT PRIMARY KEY,
             owner_id TEXT NOT NULL,
-            company TEXT,
-            position TEXT,
+            employer TEXT,
+            job_title TEXT,
             start_date TEXT,
-            end_date TEXT,
             salary REAL,
             currency TEXT,
             FOREIGN KEY (owner_id) REFERENCES people(person_id)
@@ -75,12 +73,10 @@ def create_tables(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS credit_cards (
             card_id TEXT PRIMARY KEY,
             owner_id TEXT NOT NULL,
-            issuer TEXT,
-            card_no TEXT,
-            cvv TEXT,
-            expires TEXT,
-            credit_limit REAL,
-            currency TEXT,
+            provider TEXT,
+            number TEXT,
+            cvc TEXT,
+            expire TEXT,
             FOREIGN KEY (owner_id) REFERENCES people(person_id)
         )
     """)
@@ -119,11 +115,10 @@ def create_tables(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS internet_accounts (
             account_id TEXT PRIMARY KEY,
             owner_id TEXT NOT NULL,
-            service TEXT,
+            url TEXT,
             username TEXT,
             email TEXT,
             password TEXT,
-            two_factor INTEGER,
             FOREIGN KEY (owner_id) REFERENCES people(person_id)
         )
     """)
@@ -133,13 +128,10 @@ def create_tables(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS insurance_policies (
             policy_id TEXT PRIMARY KEY,
             owner_id TEXT NOT NULL,
-            provider TEXT,
-            policy_no TEXT,
+            insurer TEXT,
+            policy_number TEXT,
             policy_type TEXT,
-            premium REAL,
-            deductible REAL,
-            coverage_limit REAL,
-            currency TEXT,
+            expires TEXT,
             FOREIGN KEY (owner_id) REFERENCES people(person_id)
         )
     """)
@@ -149,12 +141,9 @@ def create_tables(conn: sqlite3.Connection):
         CREATE TABLE IF NOT EXISTS medical_records (
             record_id TEXT PRIMARY KEY,
             owner_id TEXT NOT NULL,
-            date TEXT,
-            provider TEXT,
-            diagnosis TEXT,
-            treatment TEXT,
-            medications TEXT,
-            follow_up TEXT,
+            ssn TEXT,
+            blood_type TEXT,
+            condition TEXT,
             FOREIGN KEY (owner_id) REFERENCES people(person_id)
         )
     """)
@@ -223,8 +212,8 @@ def insert_employments(conn: sqlite3.Connection, employments: List[Dict[str, Any
     cursor = conn.cursor()
     for emp in employments:
         cursor.execute(
-            "INSERT OR REPLACE INTO employments (employment_id, owner_id, company, position, start_date, end_date, salary, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (emp['employment_id'], emp['owner_id'], emp['employer'], emp['job_title'], emp['start_date'], emp.get('end_date'), emp.get('salary'), emp.get('currency'))
+            "INSERT OR REPLACE INTO employments (employment_id, owner_id, employer, job_title, start_date, salary, currency) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (emp['employment_id'], emp['owner_id'], emp['employer'], emp['job_title'], emp['start_date'], emp.get('salary'), emp.get('currency'))
         )
     conn.commit()
 
@@ -234,8 +223,8 @@ def insert_credit_cards(conn: sqlite3.Connection, cards: List[Dict[str, Any]]):
     cursor = conn.cursor()
     for card in cards:
         cursor.execute(
-            "INSERT OR REPLACE INTO credit_cards (card_id, owner_id, issuer, card_no, cvv, expires, credit_limit, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (card['card_id'], card['owner_id'], card.get('provider'), card.get('number'), card.get('cvc'), card.get('expire'), None, None)
+            "INSERT OR REPLACE INTO credit_cards (card_id, owner_id, provider, number, cvc, expire) VALUES (?, ?, ?, ?, ?, ?)",
+            (card['card_id'], card['owner_id'], card['provider'], card['number'], card['cvc'], card['expire'])
         )
     conn.commit()
 
@@ -267,8 +256,8 @@ def insert_internet_accounts(conn: sqlite3.Connection, accounts: List[Dict[str, 
     cursor = conn.cursor()
     for acc in accounts:
         cursor.execute(
-            "INSERT OR REPLACE INTO internet_accounts (account_id, owner_id, service, username, email, password, two_factor) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (acc.get('net_id'), acc['owner_id'], acc.get('url'), acc['username'], acc['email'], acc.get('password'), 0)
+            "INSERT OR REPLACE INTO internet_accounts (account_id, owner_id, url, username, email, password) VALUES (?, ?, ?, ?, ?, ?)",
+            (acc['net_id'], acc['owner_id'], acc['url'], acc['username'], acc['email'], acc.get('password'))
         )
     conn.commit()
 
@@ -278,9 +267,8 @@ def insert_insurance_policies(conn: sqlite3.Connection, policies: List[Dict[str,
     cursor = conn.cursor()
     for policy in policies:
         cursor.execute(
-            "INSERT OR REPLACE INTO insurance_policies (policy_id, owner_id, provider, policy_no, policy_type, premium, deductible, coverage_limit, currency) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (policy['policy_id'], policy['owner_id'], policy.get('insurer'), policy.get('policy_number'), policy['policy_type'], 
-             None, None, None, None)
+            "INSERT OR REPLACE INTO insurance_policies (policy_id, owner_id, insurer, policy_number, policy_type, expires) VALUES (?, ?, ?, ?, ?, ?)",
+            (policy['policy_id'], policy['owner_id'], policy['insurer'], policy['policy_number'], policy['policy_type'], policy['expires'])
         )
     conn.commit()
 
@@ -290,9 +278,8 @@ def insert_medical_records(conn: sqlite3.Connection, records: List[Dict[str, Any
     cursor = conn.cursor()
     for record in records:
         cursor.execute(
-            "INSERT OR REPLACE INTO medical_records (record_id, owner_id, date, provider, diagnosis, treatment, medications, follow_up) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (record['record_id'], record['owner_id'], None, None, 
-             record.get('condition'), None, None, None)
+            "INSERT OR REPLACE INTO medical_records (record_id, owner_id, ssn, blood_type, condition) VALUES (?, ?, ?, ?, ?)",
+            (record['record_id'], record['owner_id'], record['ssn'], record['blood_type'], record['condition'])
         )
     conn.commit()
 

@@ -262,6 +262,12 @@ async def main():
         default="results",
         help="Result output parent directory name",
     )
+    parser.add_argument(
+        "--questions_file",
+        type=str,
+        default=None,
+        help="Path to custom questions JSONL file for file benchmarks",
+    )
     args = parser.parse_args()
 
     client_settings = {"base_url": args.letta_server}
@@ -270,7 +276,15 @@ async def main():
     bench_mod = importlib.import_module(
         f".{args.benchmark}.{args.benchmark}_benchmark", "leaderboard"
     )
-    benchmark: Benchmark = getattr(bench_mod, args.benchmark_variable)
+    
+    # Check if this is a file benchmark
+    if args.benchmark == "letta_file_bench":
+        if not args.questions_file:
+            raise ValueError("--questions_file is required for letta_file_bench benchmark")
+        # Use the factory function
+        benchmark: Benchmark = bench_mod.create_file_open_benchmark(questions_file=args.questions_file)
+    else:
+        benchmark: Benchmark = getattr(bench_mod, args.benchmark_variable)
 
     model_config_path = f"leaderboard/llm_model_configs/{args.model}.json"
     with open(model_config_path) as f:

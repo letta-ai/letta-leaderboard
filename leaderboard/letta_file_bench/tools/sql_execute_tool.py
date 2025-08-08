@@ -35,27 +35,29 @@ class SQLExecuteTool:
         start_time = time.time()
         
         try:
-            conn = sqlite3.connect(self.db_path)
+            # Open database in read-only mode
+            conn = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
             conn.row_factory = sqlite3.Row  # Enable column access by name
             cursor = conn.cursor()
+            
+            # Enforce read-only operations
+            query_upper = query.strip().upper()
+            write_operations = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 'TRUNCATE']
+            
+            if any(query_upper.startswith(op) for op in write_operations):
+                raise ValueError(f"Write operations are not allowed. Only SELECT queries are permitted.")
             
             # Execute query
             cursor.execute(query)
             
-            # Handle different query types
-            if query.strip().upper().startswith("SELECT"):
-                rows = cursor.fetchall()
-                result = [dict(row) for row in rows]
-                row_count = len(result)
-                
-                # Simplify single-value results
-                if row_count == 1 and len(result[0]) == 1:
-                    result = list(result[0].values())[0]
-                    
-            else:
-                conn.commit()
-                result = cursor.rowcount
-                row_count = cursor.rowcount
+            # Handle SELECT queries
+            rows = cursor.fetchall()
+            result = [dict(row) for row in rows]
+            row_count = len(result)
+            
+            # Simplify single-value results
+            if row_count == 1 and len(result[0]) == 1:
+                result = list(result[0].values())[0]
             
             execution_time_ms = (time.time() - start_time) * 1000
             
@@ -148,10 +150,10 @@ class SQLExecuteTool:
                     f"{row['account_id']} (Account: {row['account_no']})" for row in samples
                 ]
             elif table_name == "credit_cards":
-                cursor.execute(f"SELECT card_id, card_no FROM {table_name} LIMIT 3")
+                cursor.execute(f"SELECT card_id, number FROM {table_name} LIMIT 3")
                 samples = cursor.fetchall()
                 overview["sample_ids"][table_name] = [
-                    f"{row['card_id']} (Card: {row['card_no'][:4]}...)" for row in samples
+                    f"{row['card_id']} (Card: {row['number'][:4]}...)" for row in samples
                 ]
             elif table_name == "vehicles":
                 cursor.execute(f"SELECT vehicle_id, license_plate FROM {table_name} LIMIT 3")
