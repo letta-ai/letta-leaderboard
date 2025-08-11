@@ -13,4 +13,8 @@ CLAUDE.md
 
 .DS_Store
 
+
+leaderboard/locomo/data*
+
 .venv
+
