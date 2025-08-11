@@ -1,0 +1,5772 @@
+{
+  "session_id": "20250725_142722",
+  "model": "claude-sonnet-4-20250514",
+  "timestamp": "2025-07-25T14:30:04.608087",
+  "total_questions_target": 1,
+  "total_questions_generated": 1,
+  "conversations": [
+    {
+      "question_number": 1,
+      "success": true,
+      "conversation": [
+        {
+          "role": "user",
+          "content": "Generate question #1.\n\nHere are ALL 1 existing questions (you must generate something different):\n================================================================================\n1. Among people diagnosed with allergies who own exactly 3 purebred pets, who owns more vehicles - and how many do they have?\n   Answer: There are only two people in the database with allergy diagnoses who own exactly 3 purebred pets: Samantha Diaz and Kelly Pena. Between them, Kelly Pena owns more vehicles with 4 total vehicles, compared to Samantha Diaz who owns 2 vehicles.\n================================================================================\nGenerate a completely different and creative question!\n\nYour task: Generate ONE new, unique, difficult question that is completely different from the above.\nRemember to:\n1. Explore the data to find unique patterns\n2. Verify your question has exactly ONE answer\n3. Be creative - don't follow the same patterns as existing questions\n\nUse execute_sql to explore thoroughly. When you have found a great question and verified it has a unique answer, call register_question. Note: register_question will END this session immediately, so only call it when completely ready!"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_015Xz1Xk7VFgTCjERXhfQAAk', input={'query': 'SELECT COUNT(*) as total_people FROM people'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) as total_people FROM people"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 500,
+            "row_count": 1,
+            "execution_time_ms": 0.5631446838378906,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_013unmnHS9m9UnwNsdTrVhHJ', input={'query': 'SELECT person_id, full_name FROM people ORDER BY person_id LIMIT 5'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT person_id, full_name FROM people ORDER BY person_id LIMIT 5"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "person_id": "pers-0001",
+                "full_name": "Robert Smith"
+              },
+              {
+                "person_id": "pers-0002",
+                "full_name": "Melinda Smith"
+              },
+              {
+                "person_id": "pers-0003",
+                "full_name": "Jacob Griffin"
+              },
+              {
+                "person_id": "pers-0004",
+                "full_name": "Katherine Greene"
+              },
+              {
+                "person_id": "pers-0005",
+                "full_name": "Robert Bryant"
+              }
+            ],
+            "row_count": 5,
+            "execution_time_ms": 2.3398399353027344,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Awg8Yzgkvr8orpVHSKwkT3', input={'query': 'SELECT account_no, owner_id, balance FROM bank_accounts ORDER BY balance DESC LIMIT 10'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT account_no, owner_id, balance FROM bank_accounts ORDER BY balance DESC LIMIT 10"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "account_no": "ELJS97953655586441",
+                "owner_id": "pers-0369",
+                "balance": 49965.44
+              },
+              {
+                "account_no": "DTOI58888730097670",
+                "owner_id": "pers-0028",
+                "balance": 49964.6
+              },
+              {
+                "account_no": "MWYC69595988438884",
+                "owner_id": "pers-0350",
+                "balance": 49943.9
+              },
+              {
+                "account_no": "DVUI39296230848866",
+                "owner_id": "pers-0288",
+                "balance": 49872.93
+              },
+              {
+                "account_no": "TWEL73366597272313",
+                "owner_id": "pers-0046",
+                "balance": 49816.59
+              },
+              {
+                "account_no": "JBNM98655612924139",
+                "owner_id": "pers-0361",
+                "balance": 49780.36
+              },
+              {
+                "account_no": "QYNZ44920054406533",
+                "owner_id": "pers-0416",
+                "balance": 49776.85
+              },
+              {
+                "account_no": "SBWV10887188291538",
+                "owner_id": "pers-0282",
+                "balance": 49687.04
+              },
+              {
+                "account_no": "OSZJ86322288718950",
+                "owner_id": "pers-0035",
+                "balance": 49664.08
+              },
+              {
+                "account_no": "YMAZ02277507084315",
+                "owner_id": "pers-0487",
+                "balance": 49656.73
+              }
+            ],
+            "row_count": 10,
+            "execution_time_ms": 2.897977828979492,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_018QCTcoZrMitJHRPhXZmFFF', input={'query': 'SELECT card_no, owner_id, credit_limit FROM credit_cards ORDER BY credit_limit DESC LIMIT 10'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT card_no, owner_id, credit_limit FROM credit_cards ORDER BY credit_limit DESC LIMIT 10"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "card_no": "4428180207291481",
+                "owner_id": "pers-0001",
+                "credit_limit": null
+              },
+              {
+                "card_no": "4026696022882713",
+                "owner_id": "pers-0002",
+                "credit_limit": null
+              },
+              {
+                "card_no": "345534385615242",
+                "owner_id": "pers-0002",
+                "credit_limit": null
+              },
+              {
+                "card_no": "675924228942",
+                "owner_id": "pers-0002",
+                "credit_limit": null
+              },
+              {
+                "card_no": "378361182782193",
+                "owner_id": "pers-0002",
+                "credit_limit": null
+              },
+              {
+                "card_no": "3553965809183949",
+                "owner_id": "pers-0003",
+                "credit_limit": null
+              },
+              {
+                "card_no": "4800319989478027",
+                "owner_id": "pers-0004",
+                "credit_limit": null
+              },
+              {
+                "card_no": "3578418710562190",
+                "owner_id": "pers-0005",
+                "credit_limit": null
+              },
+              {
+                "card_no": "4598777025209100",
+                "owner_id": "pers-0006",
+                "credit_limit": null
+              },
+              {
+                "card_no": "2233298791918977",
+                "owner_id": "pers-0006",
+                "credit_limit": null
+              }
+            ],
+            "row_count": 10,
+            "execution_time_ms": 3.1948089599609375,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01LBAcGoxbiEsidwNswhHMKY', input={'query': 'SELECT card_no, owner_id, credit_limit FROM credit_cards WHERE credit_limit IS NOT NULL ORDER BY credit_limit DESC LIMIT 10'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT card_no, owner_id, credit_limit FROM credit_cards WHERE credit_limit IS NOT NULL ORDER BY credit_limit DESC LIMIT 10"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [],
+            "row_count": 0,
+            "execution_time_ms": 0.7941722869873047,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01SfnWpRZdg7actXZLQyxByv', input={'query': 'SELECT COUNT(*) FROM credit_cards WHERE credit_limit IS NOT NULL'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM credit_cards WHERE credit_limit IS NOT NULL"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 0,
+            "row_count": 1,
+            "execution_time_ms": 1.039266586303711,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Fvgp9gZy3diFRx2ovQvJVr', input={'query': 'SELECT license_plate, owner_id, make, model, year FROM vehicles ORDER BY year DESC LIMIT 10'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT license_plate, owner_id, make, model, year FROM vehicles ORDER BY year DESC LIMIT 10"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "license_plate": "17-NP73",
+                "owner_id": "pers-0002",
+                "make": "Myers-Smith",
+                "model": "Plum",
+                "year": 2025
+              },
+              {
+                "license_plate": "363 VMI",
+                "owner_id": "pers-0033",
+                "make": "Copeland-Campbell",
+                "model": "Moccasin",
+                "year": 2025
+              },
+              {
+                "license_plate": "63QP3",
+                "owner_id": "pers-0049",
+                "make": "Smith, Mathews and Duarte",
+                "model": "MediumBlue",
+                "year": 2025
+              },
+              {
+                "license_plate": "7JI I87",
+                "owner_id": "pers-0056",
+                "make": "Castro, Johnson and Hayden",
+                "model": "OldLace",
+                "year": 2025
+              },
+              {
+                "license_plate": "TQB K79",
+                "owner_id": "pers-0059",
+                "make": "Bates-Obrien",
+                "model": "SpringGreen",
+                "year": 2025
+              },
+              {
+                "license_plate": "810-DDS",
+                "owner_id": "pers-0060",
+                "make": "Davis, Chen and Barrett",
+                "model": "Olive",
+                "year": 2025
+              },
+              {
+                "license_plate": "9E472",
+                "owner_id": "pers-0060",
+                "make": "Thompson-Ward",
+                "model": "OrangeRed",
+                "year": 2025
+              },
+              {
+                "license_plate": "RQ5 J0K",
+                "owner_id": "pers-0062",
+                "make": "Jones-Moore",
+                "model": "MediumTurquoise",
+                "year": 2025
+              },
+              {
+                "license_plate": "078-442",
+                "owner_id": "pers-0079",
+                "make": "Conley-Jones",
+                "model": "CadetBlue",
+                "year": 2025
+              },
+              {
+                "license_plate": "V87-88G",
+                "owner_id": "pers-0100",
+                "make": "Holmes-Savage",
+                "model": "DarkGreen",
+                "year": 2025
+              }
+            ],
+            "row_count": 10,
+            "execution_time_ms": 1.7881393432617188,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Tx8CoHZa4GA7YviocFBN4V', input={'query': \"SELECT policy_no, owner_id, provider, policy_type FROM insurance_policies WHERE policy_type = 'life' LIMIT 5\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT policy_no, owner_id, provider, policy_type FROM insurance_policies WHERE policy_type = 'life' LIMIT 5"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [],
+            "row_count": 0,
+            "execution_time_ms": 2.2819042205810547,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_011Ve5RQkCfRYDzcVTrY9mpn', input={'query': 'SELECT DISTINCT policy_type FROM insurance_policies ORDER BY policy_type'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT DISTINCT policy_type FROM insurance_policies ORDER BY policy_type"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "policy_type": "Auto"
+              },
+              {
+                "policy_type": "Health"
+              },
+              {
+                "policy_type": "Home"
+              },
+              {
+                "policy_type": "Life"
+              }
+            ],
+            "row_count": 4,
+            "execution_time_ms": 1.2972354888916016,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Br5umnk4dbM3vZ4EUokpxt', input={'query': \"SELECT policy_no, owner_id, provider, policy_type FROM insurance_policies WHERE policy_type = 'Life' LIMIT 5\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT policy_no, owner_id, provider, policy_type FROM insurance_policies WHERE policy_type = 'Life' LIMIT 5"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "policy_no": "FmC-05842435",
+                "owner_id": "pers-0004",
+                "provider": "Alexander, Parker and Diaz",
+                "policy_type": "Life"
+              },
+              {
+                "policy_no": "AuS-99763787",
+                "owner_id": "pers-0006",
+                "provider": "Strickland Ltd",
+                "policy_type": "Life"
+              },
+              {
+                "policy_no": "PHC-18805765",
+                "owner_id": "pers-0008",
+                "provider": "Porter-Castro",
+                "policy_type": "Life"
+              },
+              {
+                "policy_no": "Fll-44649830",
+                "owner_id": "pers-0011",
+                "provider": "Castro Group",
+                "policy_type": "Life"
+              },
+              {
+                "policy_no": "DBw-31158645",
+                "owner_id": "pers-0013",
+                "provider": "Tucker Group",
+                "policy_type": "Life"
+              }
+            ],
+            "row_count": 5,
+            "execution_time_ms": 0.8990764617919922,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_0125UcqcfXJpdgVyvxoKiJdB', input={'query': \"SELECT username, owner_id, service, email FROM internet_accounts WHERE service = 'Twitter' LIMIT 5\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username, owner_id, service, email FROM internet_accounts WHERE service = 'Twitter' LIMIT 5"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [],
+            "row_count": 0,
+            "execution_time_ms": 2.591848373413086,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Q7Why1ogLDeZ2hpXe7K35n', input={'query': 'SELECT DISTINCT service FROM internet_accounts ORDER BY service'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT DISTINCT service FROM internet_accounts ORDER BY service"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "service": "http://allen.com/"
+              },
+              {
+                "service": "http://alvarez.com/"
+              },
+              {
+                "service": "http://alvarez.info/"
+              },
+              {
+                "service": "http://arnold-wong.net/"
+              },
+              {
+                "service": "http://arnold.info/"
+              },
+              {
+                "service": "http://bailey.com/"
+              },
+              {
+                "service": "http://bailey.org/"
+              },
+              {
+                "service": "http://baker.com/"
+              },
+              {
+                "service": "http://barnes.com/"
+              },
+              {
+                "service": "http://barr.com/"
+              },
+              {
+                "service": "http://bates.info/"
+              },
+              {
+                "service": "http://bean.com/"
+              },
+              {
+                "service": "http://beltran.biz/"
+              },
+              {
+                "service": "http://bennett-ferguson.com/"
+              },
+              {
+                "service": "http://bennett-weber.com/"
+              },
+              {
+                "service": "http://benson.com/"
+              },
+              {
+                "service": "http://benton-harrington.org/"
+              },
+              {
+                "service": "http://bond.com/"
+              },
+              {
+                "service": "http://bradford-murillo.com/"
+              },
+              {
+                "service": "http://bradley-mayer.com/"
+              },
+              {
+                "service": "http://brock.com/"
+              },
+              {
+                "service": "http://brown-brooks.com/"
+              },
+              {
+                "service": "http://brown-fuller.info/"
+              },
+              {
+                "service": "http://brown-gordon.org/"
+              },
+              {
+                "service": "http://brown.biz/"
+              },
+              {
+                "service": "http://brown.com/"
+              },
+              {
+                "service": "http://bryant-parker.com/"
+              },
+              {
+                "service": "http://burns.biz/"
+              },
+              {
+                "service": "http://butler-wilson.com/"
+              },
+              {
+                "service": "http://cain.net/"
+              },
+              {
+                "service": "http://camacho.info/"
+              },
+              {
+                "service": "http://campbell.com/"
+              },
+              {
+                "service": "http://cardenas.info/"
+              },
+              {
+                "service": "http://carey-dickerson.biz/"
+              },
+              {
+                "service": "http://carter.info/"
+              },
+              {
+                "service": "http://chambers-morales.net/"
+              },
+              {
+                "service": "http://chambers.com/"
+              },
+              {
+                "service": "http://chaney-cole.biz/"
+              },
+              {
+                "service": "http://chaney.net/"
+              },
+              {
+                "service": "http://clark.com/"
+              },
+              {
+                "service": "http://cohen-perez.com/"
+              },
+              {
+                "service": "http://coleman.info/"
+              },
+              {
+                "service": "http://conway.net/"
+              },
+              {
+                "service": "http://cook-davis.com/"
+              },
+              {
+                "service": "http://cortez.net/"
+              },
+              {
+                "service": "http://cowan-jennings.com/"
+              },
+              {
+                "service": "http://cox.net/"
+              },
+              {
+                "service": "http://cummings-evans.com/"
+              },
+              {
+                "service": "http://daniels-phillips.biz/"
+              },
+              {
+                "service": "http://davidson.com/"
+              },
+              {
+                "service": "http://davidson.org/"
+              },
+              {
+                "service": "http://davies-mckay.com/"
+              },
+              {
+                "service": "http://davis-callahan.info/"
+              },
+              {
+                "service": "http://davis-price.com/"
+              },
+              {
+                "service": "http://diaz-quinn.com/"
+              },
+              {
+                "service": "http://diaz.org/"
+              },
+              {
+                "service": "http://dickerson-reyes.info/"
+              },
+              {
+                "service": "http://durham-brown.com/"
+              },
+              {
+                "service": "http://espinoza-brown.com/"
+              },
+              {
+                "service": "http://farley-hall.com/"
+              },
+              {
+                "service": "http://farrell.net/"
+              },
+              {
+                "service": "http://ferguson.biz/"
+              },
+              {
+                "service": "http://fields.com/"
+              },
+              {
+                "service": "http://fisher.com/"
+              },
+              {
+                "service": "http://fitzpatrick.net/"
+              },
+              {
+                "service": "http://ford.com/"
+              },
+              {
+                "service": "http://franklin.com/"
+              },
+              {
+                "service": "http://freeman-silva.com/"
+              },
+              {
+                "service": "http://french-lucas.com/"
+              },
+              {
+                "service": "http://french.com/"
+              },
+              {
+                "service": "http://garcia.com/"
+              },
+              {
+                "service": "http://gardner-harris.com/"
+              },
+              {
+                "service": "http://garza.com/"
+              },
+              {
+                "service": "http://gilbert.info/"
+              },
+              {
+                "service": "http://glass.com/"
+              },
+              {
+                "service": "http://gomez-smith.com/"
+              },
+              {
+                "service": "http://gomez.com/"
+              },
+              {
+                "service": "http://gomez.net/"
+              },
+              {
+                "service": "http://gordon.com/"
+              },
+              {
+                "service": "http://green.com/"
+              },
+              {
+                "service": "http://griffin.com/"
+              },
+              {
+                "service": "http://guerrero.com/"
+              },
+              {
+                "service": "http://gutierrez.com/"
+              },
+              {
+                "service": "http://hall.org/"
+              },
+              {
+                "service": "http://hampton.biz/"
+              },
+              {
+                "service": "http://hancock-cook.com/"
+              },
+              {
+                "service": "http://harrell-peterson.com/"
+              },
+              {
+                "service": "http://harris-brown.org/"
+              },
+              {
+                "service": "http://harris.com/"
+              },
+              {
+                "service": "http://hartman.info/"
+              },
+              {
+                "service": "http://hawkins-martinez.com/"
+              },
+              {
+                "service": "http://heath.com/"
+              },
+              {
+                "service": "http://henry.com/"
+              },
+              {
+                "service": "http://hernandez.biz/"
+              },
+              {
+                "service": "http://higgins.com/"
+              },
+              {
+                "service": "http://hill.com/"
+              },
+              {
+                "service": "http://holland-parker.com/"
+              },
+              {
+                "service": "http://hood.net/"
+              },
+              {
+                "service": "http://hoover-armstrong.com/"
+              },
+              {
+                "service": "http://horne-fisher.com/"
+              },
+              {
+                "service": "http://howard.com/"
+              },
+              {
+                "service": "http://hunt.info/"
+              },
+              {
+                "service": "http://ibarra-flowers.com/"
+              },
+              {
+                "service": "http://ibarra.com/"
+              },
+              {
+                "service": "http://jackson.com/"
+              },
+              {
+                "service": "http://jacobs.com/"
+              },
+              {
+                "service": "http://jacobson-johnson.com/"
+              },
+              {
+                "service": "http://jensen.com/"
+              },
+              {
+                "service": "http://johnson-martinez.com/"
+              },
+              {
+                "service": "http://johnson.com/"
+              },
+              {
+                "service": "http://johnson.info/"
+              },
+              {
+                "service": "http://johnson.net/"
+              },
+              {
+                "service": "http://jones.com/"
+              },
+              {
+                "service": "http://jones.info/"
+              },
+              {
+                "service": "http://jones.org/"
+              },
+              {
+                "service": "http://juarez-lopez.com/"
+              },
+              {
+                "service": "http://kerr-elliott.info/"
+              },
+              {
+                "service": "http://kim.com/"
+              },
+              {
+                "service": "http://king.biz/"
+              },
+              {
+                "service": "http://klein.com/"
+              },
+              {
+                "service": "http://lang.com/"
+              },
+              {
+                "service": "http://larson.com/"
+              },
+              {
+                "service": "http://lee.net/"
+              },
+              {
+                "service": "http://long.net/"
+              },
+              {
+                "service": "http://lopez-lambert.biz/"
+              },
+              {
+                "service": "http://mann-burke.com/"
+              },
+              {
+                "service": "http://manning.com/"
+              },
+              {
+                "service": "http://martin-thomas.com/"
+              },
+              {
+                "service": "http://martinez.com/"
+              },
+              {
+                "service": "http://martinez.net/"
+              },
+              {
+                "service": "http://may.com/"
+              },
+              {
+                "service": "http://mccormick.com/"
+              },
+              {
+                "service": "http://mcdaniel-dean.com/"
+              },
+              {
+                "service": "http://mckay.com/"
+              },
+              {
+                "service": "http://mckenzie.com/"
+              },
+              {
+                "service": "http://mcneil-coleman.net/"
+              },
+              {
+                "service": "http://mercer.net/"
+              },
+              {
+                "service": "http://meyers.com/"
+              },
+              {
+                "service": "http://miller-johnson.com/"
+              },
+              {
+                "service": "http://miller-young.biz/"
+              },
+              {
+                "service": "http://miller.com/"
+              },
+              {
+                "service": "http://miller.info/"
+              },
+              {
+                "service": "http://miller.net/"
+              },
+              {
+                "service": "http://molina.biz/"
+              },
+              {
+                "service": "http://monroe-simpson.biz/"
+              },
+              {
+                "service": "http://montes-hill.biz/"
+              },
+              {
+                "service": "http://moore-simmons.biz/"
+              },
+              {
+                "service": "http://morales-ramsey.com/"
+              },
+              {
+                "service": "http://moran.com/"
+              },
+              {
+                "service": "http://moreno-blair.net/"
+              },
+              {
+                "service": "http://morgan.biz/"
+              },
+              {
+                "service": "http://mueller-williams.com/"
+              },
+              {
+                "service": "http://mullins.org/"
+              },
+              {
+                "service": "http://murillo-spears.com/"
+              },
+              {
+                "service": "http://nelson.com/"
+              },
+              {
+                "service": "http://ortiz.com/"
+              },
+              {
+                "service": "http://owens.com/"
+              },
+              {
+                "service": "http://palmer.biz/"
+              },
+              {
+                "service": "http://park.com/"
+              },
+              {
+                "service": "http://parsons.com/"
+              },
+              {
+                "service": "http://patrick.com/"
+              },
+              {
+                "service": "http://patterson-arias.com/"
+              },
+              {
+                "service": "http://perez.biz/"
+              },
+              {
+                "service": "http://petty-holder.com/"
+              },
+              {
+                "service": "http://phelps-lee.net/"
+              },
+              {
+                "service": "http://phillips-hunter.com/"
+              },
+              {
+                "service": "http://pierce.com/"
+              },
+              {
+                "service": "http://porter-chapman.com/"
+              },
+              {
+                "service": "http://porter.com/"
+              },
+              {
+                "service": "http://ramos.com/"
+              },
+              {
+                "service": "http://ramsey.org/"
+              },
+              {
+                "service": "http://rangel-jones.com/"
+              },
+              {
+                "service": "http://reese.info/"
+              },
+              {
+                "service": "http://riddle.com/"
+              },
+              {
+                "service": "http://roach.net/"
+              },
+              {
+                "service": "http://roberts-hebert.biz/"
+              },
+              {
+                "service": "http://roberts.com/"
+              },
+              {
+                "service": "http://robinson.com/"
+              },
+              {
+                "service": "http://robinson.org/"
+              },
+              {
+                "service": "http://russo.com/"
+              },
+              {
+                "service": "http://sanders-jenkins.com/"
+              },
+              {
+                "service": "http://sawyer-perkins.com/"
+              },
+              {
+                "service": "http://schmidt-morris.info/"
+              },
+              {
+                "service": "http://schultz.com/"
+              },
+              {
+                "service": "http://serrano.com/"
+              },
+              {
+                "service": "http://simmons.biz/"
+              },
+              {
+                "service": "http://smith-richardson.com/"
+              },
+              {
+                "service": "http://smith.biz/"
+              },
+              {
+                "service": "http://smith.com/"
+              },
+              {
+                "service": "http://smith.info/"
+              },
+              {
+                "service": "http://smith.net/"
+              },
+              {
+                "service": "http://solis-scott.com/"
+              },
+              {
+                "service": "http://sosa.com/"
+              },
+              {
+                "service": "http://soto.net/"
+              },
+              {
+                "service": "http://stanton-williams.org/"
+              },
+              {
+                "service": "http://stevens-bradley.biz/"
+              },
+              {
+                "service": "http://stevenson.org/"
+              },
+              {
+                "service": "http://stone-sanchez.com/"
+              },
+              {
+                "service": "http://stone.com/"
+              },
+              {
+                "service": "http://stout.com/"
+              },
+              {
+                "service": "http://sullivan.net/"
+              },
+              {
+                "service": "http://tapia-snyder.com/"
+              },
+              {
+                "service": "http://taylor-atkinson.com/"
+              },
+              {
+                "service": "http://taylor.com/"
+              },
+              {
+                "service": "http://terry.org/"
+              },
+              {
+                "service": "http://thompson.net/"
+              },
+              {
+                "service": "http://turner.info/"
+              },
+              {
+                "service": "http://vargas.com/"
+              },
+              {
+                "service": "http://vaughn.biz/"
+              },
+              {
+                "service": "http://vazquez.com/"
+              },
+              {
+                "service": "http://velazquez-smith.com/"
+              },
+              {
+                "service": "http://villarreal.com/"
+              },
+              {
+                "service": "http://wade.com/"
+              },
+              {
+                "service": "http://walker.com/"
+              },
+              {
+                "service": "http://wallace.org/"
+              },
+              {
+                "service": "http://wang-jones.com/"
+              },
+              {
+                "service": "http://washington.com/"
+              },
+              {
+                "service": "http://watkins.com/"
+              },
+              {
+                "service": "http://webb-brady.org/"
+              },
+              {
+                "service": "http://wells.com/"
+              },
+              {
+                "service": "http://werner.com/"
+              },
+              {
+                "service": "http://west-jackson.info/"
+              },
+              {
+                "service": "http://west.com/"
+              },
+              {
+                "service": "http://wheeler.com/"
+              },
+              {
+                "service": "http://williams.com/"
+              },
+              {
+                "service": "http://wilson-griffith.com/"
+              },
+              {
+                "service": "http://wilson-munoz.org/"
+              },
+              {
+                "service": "http://wilson.com/"
+              },
+              {
+                "service": "http://wilson.info/"
+              },
+              {
+                "service": "http://wilson.net/"
+              },
+              {
+                "service": "http://wilson.org/"
+              },
+              {
+                "service": "http://wong-smith.com/"
+              },
+              {
+                "service": "http://www.adams.com/"
+              },
+              {
+                "service": "http://www.aguirre.biz/"
+              },
+              {
+                "service": "http://www.alexander.org/"
+              },
+              {
+                "service": "http://www.allen.com/"
+              },
+              {
+                "service": "http://www.anderson.com/"
+              },
+              {
+                "service": "http://www.andrews-sellers.com/"
+              },
+              {
+                "service": "http://www.archer-mcdonald.com/"
+              },
+              {
+                "service": "http://www.arias.com/"
+              },
+              {
+                "service": "http://www.arnold.org/"
+              },
+              {
+                "service": "http://www.arroyo.com/"
+              },
+              {
+                "service": "http://www.avila.org/"
+              },
+              {
+                "service": "http://www.ayala.com/"
+              },
+              {
+                "service": "http://www.barnes-gomez.com/"
+              },
+              {
+                "service": "http://www.bass-madden.info/"
+              },
+              {
+                "service": "http://www.beck.com/"
+              },
+              {
+                "service": "http://www.bell.com/"
+              },
+              {
+                "service": "http://www.beltran.info/"
+              },
+              {
+                "service": "http://www.bennett-lopez.com/"
+              },
+              {
+                "service": "http://www.bennett.com/"
+              },
+              {
+                "service": "http://www.bentley.com/"
+              },
+              {
+                "service": "http://www.benton.com/"
+              },
+              {
+                "service": "http://www.berry.com/"
+              },
+              {
+                "service": "http://www.brooks.com/"
+              },
+              {
+                "service": "http://www.brown-dillon.com/"
+              },
+              {
+                "service": "http://www.brown.com/"
+              },
+              {
+                "service": "http://www.bryant-glenn.biz/"
+              },
+              {
+                "service": "http://www.buchanan-martinez.com/"
+              },
+              {
+                "service": "http://www.burgess-kline.biz/"
+              },
+              {
+                "service": "http://www.burns.org/"
+              },
+              {
+                "service": "http://www.carr-parsons.com/"
+              },
+              {
+                "service": "http://www.carroll.com/"
+              },
+              {
+                "service": "http://www.carter.com/"
+              },
+              {
+                "service": "http://www.castillo-foster.info/"
+              },
+              {
+                "service": "http://www.castillo.net/"
+              },
+              {
+                "service": "http://www.castro.com/"
+              },
+              {
+                "service": "http://www.chambers.com/"
+              },
+              {
+                "service": "http://www.chang.com/"
+              },
+              {
+                "service": "http://www.cherry.org/"
+              },
+              {
+                "service": "http://www.cohen.com/"
+              },
+              {
+                "service": "http://www.coleman.biz/"
+              },
+              {
+                "service": "http://www.collins.com/"
+              },
+              {
+                "service": "http://www.copeland.com/"
+              },
+              {
+                "service": "http://www.cox-foster.info/"
+              },
+              {
+                "service": "http://www.daniel.com/"
+              },
+              {
+                "service": "http://www.davies-cooley.biz/"
+              },
+              {
+                "service": "http://www.davila-potter.info/"
+              },
+              {
+                "service": "http://www.davis.com/"
+              },
+              {
+                "service": "http://www.davis.info/"
+              },
+              {
+                "service": "http://www.delgado.com/"
+              },
+              {
+                "service": "http://www.diaz.biz/"
+              },
+              {
+                "service": "http://www.duarte.org/"
+              },
+              {
+                "service": "http://www.english-hall.com/"
+              },
+              {
+                "service": "http://www.everett.info/"
+              },
+              {
+                "service": "http://www.ferguson-reed.biz/"
+              },
+              {
+                "service": "http://www.fernandez-vincent.net/"
+              },
+              {
+                "service": "http://www.fisher-harris.com/"
+              },
+              {
+                "service": "http://www.fisher.org/"
+              },
+              {
+                "service": "http://www.fletcher.com/"
+              },
+              {
+                "service": "http://www.flores-tyler.com/"
+              },
+              {
+                "service": "http://www.ford-ortiz.com/"
+              },
+              {
+                "service": "http://www.french-salas.com/"
+              },
+              {
+                "service": "http://www.garcia-brown.com/"
+              },
+              {
+                "service": "http://www.garrett-wells.info/"
+              },
+              {
+                "service": "http://www.garza-meza.com/"
+              },
+              {
+                "service": "http://www.george-silva.biz/"
+              },
+              {
+                "service": "http://www.gill.com/"
+              },
+              {
+                "service": "http://www.gilmore.net/"
+              },
+              {
+                "service": "http://www.glass.com/"
+              },
+              {
+                "service": "http://www.grant.com/"
+              },
+              {
+                "service": "http://www.grant.info/"
+              },
+              {
+                "service": "http://www.graves-boyer.com/"
+              },
+              {
+                "service": "http://www.gross.com/"
+              },
+              {
+                "service": "http://www.hall-munoz.com/"
+              },
+              {
+                "service": "http://www.hall-wagner.net/"
+              },
+              {
+                "service": "http://www.hall.com/"
+              },
+              {
+                "service": "http://www.harper.info/"
+              },
+              {
+                "service": "http://www.harper.org/"
+              },
+              {
+                "service": "http://www.harrison.net/"
+              },
+              {
+                "service": "http://www.hart.com/"
+              },
+              {
+                "service": "http://www.hays.com/"
+              },
+              {
+                "service": "http://www.hays.net/"
+              },
+              {
+                "service": "http://www.heath.com/"
+              },
+              {
+                "service": "http://www.henderson-martinez.net/"
+              },
+              {
+                "service": "http://www.henderson.com/"
+              },
+              {
+                "service": "http://www.henry.com/"
+              },
+              {
+                "service": "http://www.herman.com/"
+              },
+              {
+                "service": "http://www.hernandez-mills.com/"
+              },
+              {
+                "service": "http://www.hernandez.com/"
+              },
+              {
+                "service": "http://www.herrera-roberts.com/"
+              },
+              {
+                "service": "http://www.hickman.com/"
+              },
+              {
+                "service": "http://www.hill.com/"
+              },
+              {
+                "service": "http://www.holland-smith.com/"
+              },
+              {
+                "service": "http://www.holmes.com/"
+              },
+              {
+                "service": "http://www.hood.info/"
+              },
+              {
+                "service": "http://www.howard.com/"
+              },
+              {
+                "service": "http://www.huffman.com/"
+              },
+              {
+                "service": "http://www.hughes.com/"
+              },
+              {
+                "service": "http://www.hurst.net/"
+              },
+              {
+                "service": "http://www.ingram.com/"
+              },
+              {
+                "service": "http://www.jackson-carson.org/"
+              },
+              {
+                "service": "http://www.jackson-harrison.com/"
+              },
+              {
+                "service": "http://www.jacobs-garcia.com/"
+              },
+              {
+                "service": "http://www.jefferson.net/"
+              },
+              {
+                "service": "http://www.jimenez-martin.com/"
+              },
+              {
+                "service": "http://www.jimenez.info/"
+              },
+              {
+                "service": "http://www.johnson-cervantes.com/"
+              },
+              {
+                "service": "http://www.johnson-owens.com/"
+              },
+              {
+                "service": "http://www.johnson-wilkinson.com/"
+              },
+              {
+                "service": "http://www.johnson.com/"
+              },
+              {
+                "service": "http://www.jones-dean.com/"
+              },
+              {
+                "service": "http://www.keller.com/"
+              },
+              {
+                "service": "http://www.kim-zavala.info/"
+              },
+              {
+                "service": "http://www.king.biz/"
+              },
+              {
+                "service": "http://www.king.com/"
+              },
+              {
+                "service": "http://www.klein-ramos.info/"
+              },
+              {
+                "service": "http://www.kline.com/"
+              },
+              {
+                "service": "http://www.knox.com/"
+              },
+              {
+                "service": "http://www.lambert.net/"
+              },
+              {
+                "service": "http://www.lara-austin.net/"
+              },
+              {
+                "service": "http://www.lawrence.com/"
+              },
+              {
+                "service": "http://www.lawson.com/"
+              },
+              {
+                "service": "http://www.lee.org/"
+              },
+              {
+                "service": "http://www.leonard.com/"
+              },
+              {
+                "service": "http://www.lewis-choi.biz/"
+              },
+              {
+                "service": "http://www.lewis-pugh.com/"
+              },
+              {
+                "service": "http://www.little-juarez.net/"
+              },
+              {
+                "service": "http://www.long.com/"
+              },
+              {
+                "service": "http://www.lopez-oconnell.org/"
+              },
+              {
+                "service": "http://www.lopez.net/"
+              },
+              {
+                "service": "http://www.luna.com/"
+              },
+              {
+                "service": "http://www.mack-ray.com/"
+              },
+              {
+                "service": "http://www.mack.org/"
+              },
+              {
+                "service": "http://www.madden.com/"
+              },
+              {
+                "service": "http://www.maldonado.net/"
+              },
+              {
+                "service": "http://www.malone.com/"
+              },
+              {
+                "service": "http://www.mann.org/"
+              },
+              {
+                "service": "http://www.marks.net/"
+              },
+              {
+                "service": "http://www.martin-pearson.com/"
+              },
+              {
+                "service": "http://www.martinez.com/"
+              },
+              {
+                "service": "http://www.mcclain.biz/"
+              },
+              {
+                "service": "http://www.mcfarland.com/"
+              },
+              {
+                "service": "http://www.mckay.com/"
+              },
+              {
+                "service": "http://www.mcmahon.com/"
+              },
+              {
+                "service": "http://www.mendoza.com/"
+              },
+              {
+                "service": "http://www.michael.com/"
+              },
+              {
+                "service": "http://www.miller-brady.com/"
+              },
+              {
+                "service": "http://www.miller-nichols.info/"
+              },
+              {
+                "service": "http://www.miller-ritter.org/"
+              },
+              {
+                "service": "http://www.miller.com/"
+              },
+              {
+                "service": "http://www.mills-castillo.biz/"
+              },
+              {
+                "service": "http://www.montgomery.com/"
+              },
+              {
+                "service": "http://www.moore.com/"
+              },
+              {
+                "service": "http://www.moore.net/"
+              },
+              {
+                "service": "http://www.moore.org/"
+              },
+              {
+                "service": "http://www.mora.info/"
+              },
+              {
+                "service": "http://www.moran.biz/"
+              },
+              {
+                "service": "http://www.moran.com/"
+              },
+              {
+                "service": "http://www.moreno-ruiz.com/"
+              },
+              {
+                "service": "http://www.moreno.com/"
+              },
+              {
+                "service": "http://www.morton.com/"
+              },
+              {
+                "service": "http://www.moss.info/"
+              },
+              {
+                "service": "http://www.mullins.biz/"
+              },
+              {
+                "service": "http://www.nguyen.com/"
+              },
+              {
+                "service": "http://www.nichols.net/"
+              },
+              {
+                "service": "http://www.nichols.org/"
+              },
+              {
+                "service": "http://www.norris.com/"
+              },
+              {
+                "service": "http://www.novak.com/"
+              },
+              {
+                "service": "http://www.obrien.org/"
+              },
+              {
+                "service": "http://www.oliver.com/"
+              },
+              {
+                "service": "http://www.olsen-keller.com/"
+              },
+              {
+                "service": "http://www.olson-sutton.com/"
+              },
+              {
+                "service": "http://www.ortega-hall.com/"
+              },
+              {
+                "service": "http://www.ortega-williams.com/"
+              },
+              {
+                "service": "http://www.owens-lyons.com/"
+              },
+              {
+                "service": "http://www.parker.com/"
+              },
+              {
+                "service": "http://www.pennington-wise.com/"
+              },
+              {
+                "service": "http://www.perez.net/"
+              },
+              {
+                "service": "http://www.perez.org/"
+              },
+              {
+                "service": "http://www.pham.com/"
+              },
+              {
+                "service": "http://www.pope.org/"
+              },
+              {
+                "service": "http://www.powell.info/"
+              },
+              {
+                "service": "http://www.powers-garrett.com/"
+              },
+              {
+                "service": "http://www.price-howard.net/"
+              },
+              {
+                "service": "http://www.ramirez.com/"
+              },
+              {
+                "service": "http://www.ramos.com/"
+              },
+              {
+                "service": "http://www.reese.com/"
+              },
+              {
+                "service": "http://www.reilly-alexander.net/"
+              },
+              {
+                "service": "http://www.reyes-jenkins.com/"
+              },
+              {
+                "service": "http://www.rhodes.com/"
+              },
+              {
+                "service": "http://www.richards.com/"
+              },
+              {
+                "service": "http://www.riley-fox.com/"
+              },
+              {
+                "service": "http://www.roberts-fritz.net/"
+              },
+              {
+                "service": "http://www.roberts-watson.net/"
+              },
+              {
+                "service": "http://www.rodriguez-walker.com/"
+              },
+              {
+                "service": "http://www.rodriguez.com/"
+              },
+              {
+                "service": "http://www.roman.com/"
+              },
+              {
+                "service": "http://www.rose.com/"
+              },
+              {
+                "service": "http://www.sanchez.com/"
+              },
+              {
+                "service": "http://www.sanchez.net/"
+              },
+              {
+                "service": "http://www.santana-lin.com/"
+              },
+              {
+                "service": "http://www.santos.com/"
+              },
+              {
+                "service": "http://www.schmidt.com/"
+              },
+              {
+                "service": "http://www.schmitt-davis.info/"
+              },
+              {
+                "service": "http://www.schmitt-washington.org/"
+              },
+              {
+                "service": "http://www.scott-roman.com/"
+              },
+              {
+                "service": "http://www.shannon.com/"
+              },
+              {
+                "service": "http://www.shelton.com/"
+              },
+              {
+                "service": "http://www.sheppard-jimenez.com/"
+              },
+              {
+                "service": "http://www.sherman-johnson.biz/"
+              },
+              {
+                "service": "http://www.sims.org/"
+              },
+              {
+                "service": "http://www.smith.com/"
+              },
+              {
+                "service": "http://www.soto.com/"
+              },
+              {
+                "service": "http://www.soto.org/"
+              },
+              {
+                "service": "http://www.spears.info/"
+              },
+              {
+                "service": "http://www.spencer.com/"
+              },
+              {
+                "service": "http://www.spencer.org/"
+              },
+              {
+                "service": "http://www.stanley-evans.com/"
+              },
+              {
+                "service": "http://www.sutton.com/"
+              },
+              {
+                "service": "http://www.taylor.com/"
+              },
+              {
+                "service": "http://www.terry.com/"
+              },
+              {
+                "service": "http://www.thomas.com/"
+              },
+              {
+                "service": "http://www.thomas.info/"
+              },
+              {
+                "service": "http://www.thompson.com/"
+              },
+              {
+                "service": "http://www.tran-rojas.info/"
+              },
+              {
+                "service": "http://www.travis.com/"
+              },
+              {
+                "service": "http://www.underwood-thompson.biz/"
+              },
+              {
+                "service": "http://www.vasquez-campbell.com/"
+              },
+              {
+                "service": "http://www.vasquez.com/"
+              },
+              {
+                "service": "http://www.vaughn.com/"
+              },
+              {
+                "service": "http://www.walker-swanson.com/"
+              },
+              {
+                "service": "http://www.walker.com/"
+              },
+              {
+                "service": "http://www.wallace.biz/"
+              },
+              {
+                "service": "http://www.washington-santos.biz/"
+              },
+              {
+                "service": "http://www.watson.com/"
+              },
+              {
+                "service": "http://www.welch-garcia.info/"
+              },
+              {
+                "service": "http://www.werner.biz/"
+              },
+              {
+                "service": "http://www.west.com/"
+              },
+              {
+                "service": "http://www.wilkinson.com/"
+              },
+              {
+                "service": "http://www.williams-klein.com/"
+              },
+              {
+                "service": "http://www.williams-miller.info/"
+              },
+              {
+                "service": "http://www.williams.com/"
+              },
+              {
+                "service": "http://www.williams.org/"
+              },
+              {
+                "service": "http://www.willis-johnson.com/"
+              },
+              {
+                "service": "http://www.wilson-richard.com/"
+              },
+              {
+                "service": "http://www.winters.com/"
+              },
+              {
+                "service": "http://www.wolfe.com/"
+              },
+              {
+                "service": "http://www.wu.com/"
+              },
+              {
+                "service": "http://www.york.com/"
+              },
+              {
+                "service": "http://www.young-ruiz.com/"
+              },
+              {
+                "service": "http://zhang.com/"
+              },
+              {
+                "service": "https://acevedo.biz/"
+              },
+              {
+                "service": "https://acevedo.com/"
+              },
+              {
+                "service": "https://adams-brooks.info/"
+              },
+              {
+                "service": "https://allen-lopez.org/"
+              },
+              {
+                "service": "https://alvarez.com/"
+              },
+              {
+                "service": "https://andrews-green.com/"
+              },
+              {
+                "service": "https://andrews.com/"
+              },
+              {
+                "service": "https://armstrong-munoz.net/"
+              },
+              {
+                "service": "https://armstrong.com/"
+              },
+              {
+                "service": "https://arnold-smith.info/"
+              },
+              {
+                "service": "https://arroyo.com/"
+              },
+              {
+                "service": "https://baker.biz/"
+              },
+              {
+                "service": "https://baker.com/"
+              },
+              {
+                "service": "https://baker.net/"
+              },
+              {
+                "service": "https://baldwin.biz/"
+              },
+              {
+                "service": "https://barker.info/"
+              },
+              {
+                "service": "https://bauer-mitchell.com/"
+              },
+              {
+                "service": "https://baxter-baker.com/"
+              },
+              {
+                "service": "https://bell-shelton.com/"
+              },
+              {
+                "service": "https://bird.com/"
+              },
+              {
+                "service": "https://black.com/"
+              },
+              {
+                "service": "https://boyd.com/"
+              },
+              {
+                "service": "https://boyer.com/"
+              },
+              {
+                "service": "https://branch-drake.com/"
+              },
+              {
+                "service": "https://brown-larsen.com/"
+              },
+              {
+                "service": "https://brown-thomas.info/"
+              },
+              {
+                "service": "https://brown.biz/"
+              },
+              {
+                "service": "https://brown.com/"
+              },
+              {
+                "service": "https://brown.info/"
+              },
+              {
+                "service": "https://burton.com/"
+              },
+              {
+                "service": "https://butler.com/"
+              },
+              {
+                "service": "https://carey.biz/"
+              },
+              {
+                "service": "https://carroll.com/"
+              },
+              {
+                "service": "https://carter.com/"
+              },
+              {
+                "service": "https://casey-sanders.com/"
+              },
+              {
+                "service": "https://castaneda.org/"
+              },
+              {
+                "service": "https://castillo.com/"
+              },
+              {
+                "service": "https://chandler-martinez.com/"
+              },
+              {
+                "service": "https://clark.com/"
+              },
+              {
+                "service": "https://cole.com/"
+              },
+              {
+                "service": "https://cole.org/"
+              },
+              {
+                "service": "https://conley.biz/"
+              },
+              {
+                "service": "https://contreras.biz/"
+              },
+              {
+                "service": "https://cook.info/"
+              },
+              {
+                "service": "https://cooper.com/"
+              },
+              {
+                "service": "https://cordova.info/"
+              },
+              {
+                "service": "https://cox.com/"
+              },
+              {
+                "service": "https://cunningham.com/"
+              },
+              {
+                "service": "https://curry.com/"
+              },
+              {
+                "service": "https://davis-sexton.com/"
+              },
+              {
+                "service": "https://davis.com/"
+              },
+              {
+                "service": "https://dominguez.com/"
+              },
+              {
+                "service": "https://donovan.com/"
+              },
+              {
+                "service": "https://duke-hall.biz/"
+              },
+              {
+                "service": "https://dunn.com/"
+              },
+              {
+                "service": "https://edwards-young.com/"
+              },
+              {
+                "service": "https://edwards.com/"
+              },
+              {
+                "service": "https://fischer-mccarthy.com/"
+              },
+              {
+                "service": "https://fisher.com/"
+              },
+              {
+                "service": "https://fleming.net/"
+              },
+              {
+                "service": "https://flores.biz/"
+              },
+              {
+                "service": "https://flores.com/"
+              },
+              {
+                "service": "https://fox.com/"
+              },
+              {
+                "service": "https://franklin-esparza.info/"
+              },
+              {
+                "service": "https://freeman.com/"
+              },
+              {
+                "service": "https://fritz-duran.com/"
+              },
+              {
+                "service": "https://gallegos.com/"
+              },
+              {
+                "service": "https://garcia.com/"
+              },
+              {
+                "service": "https://garza.com/"
+              },
+              {
+                "service": "https://gates.com/"
+              },
+              {
+                "service": "https://gentry.info/"
+              },
+              {
+                "service": "https://gentry.net/"
+              },
+              {
+                "service": "https://gilbert.net/"
+              },
+              {
+                "service": "https://gillespie.org/"
+              },
+              {
+                "service": "https://gomez.biz/"
+              },
+              {
+                "service": "https://gomez.com/"
+              },
+              {
+                "service": "https://gonzales-whitney.net/"
+              },
+              {
+                "service": "https://green.com/"
+              },
+              {
+                "service": "https://greene-williams.net/"
+              },
+              {
+                "service": "https://greer.com/"
+              },
+              {
+                "service": "https://griffith.com/"
+              },
+              {
+                "service": "https://guerra-barker.com/"
+              },
+              {
+                "service": "https://hammond.com/"
+              },
+              {
+                "service": "https://harrington.org/"
+              },
+              {
+                "service": "https://henson-smith.com/"
+              },
+              {
+                "service": "https://henson.com/"
+              },
+              {
+                "service": "https://hernandez.com/"
+              },
+              {
+                "service": "https://hodge-pierce.com/"
+              },
+              {
+                "service": "https://holland-duran.com/"
+              },
+              {
+                "service": "https://horn.com/"
+              },
+              {
+                "service": "https://hubbard.com/"
+              },
+              {
+                "service": "https://hudson.com/"
+              },
+              {
+                "service": "https://huff.com/"
+              },
+              {
+                "service": "https://hughes.info/"
+              },
+              {
+                "service": "https://humphrey.com/"
+              },
+              {
+                "service": "https://hunter.net/"
+              },
+              {
+                "service": "https://hurst.biz/"
+              },
+              {
+                "service": "https://irwin.info/"
+              },
+              {
+                "service": "https://jackson-james.com/"
+              },
+              {
+                "service": "https://jacobs.info/"
+              },
+              {
+                "service": "https://jefferson.info/"
+              },
+              {
+                "service": "https://jennings.net/"
+              },
+              {
+                "service": "https://jensen.com/"
+              },
+              {
+                "service": "https://jimenez.biz/"
+              },
+              {
+                "service": "https://johnson-lewis.com/"
+              },
+              {
+                "service": "https://johnson.com/"
+              },
+              {
+                "service": "https://johnson.info/"
+              },
+              {
+                "service": "https://jones-gordon.com/"
+              },
+              {
+                "service": "https://jones.com/"
+              },
+              {
+                "service": "https://kane.com/"
+              },
+              {
+                "service": "https://keller.com/"
+              },
+              {
+                "service": "https://kennedy.org/"
+              },
+              {
+                "service": "https://king-porter.net/"
+              },
+              {
+                "service": "https://kline-wilson.info/"
+              },
+              {
+                "service": "https://krause.biz/"
+              },
+              {
+                "service": "https://krause.com/"
+              },
+              {
+                "service": "https://lee-navarro.com/"
+              },
+              {
+                "service": "https://lee.com/"
+              },
+              {
+                "service": "https://leonard.com/"
+              },
+              {
+                "service": "https://lewis-hebert.net/"
+              },
+              {
+                "service": "https://lewis.net/"
+              },
+              {
+                "service": "https://long-cohen.org/"
+              },
+              {
+                "service": "https://lopez-hall.com/"
+              },
+              {
+                "service": "https://lowe.biz/"
+              },
+              {
+                "service": "https://lucas.com/"
+              },
+              {
+                "service": "https://maddox.com/"
+              },
+              {
+                "service": "https://martin-campos.net/"
+              },
+              {
+                "service": "https://martinez.com/"
+              },
+              {
+                "service": "https://mason.info/"
+              },
+              {
+                "service": "https://matthews.net/"
+              },
+              {
+                "service": "https://mccarthy.com/"
+              },
+              {
+                "service": "https://mcclain.com/"
+              },
+              {
+                "service": "https://mcclure.biz/"
+              },
+              {
+                "service": "https://mendez.info/"
+              },
+              {
+                "service": "https://mendoza.biz/"
+              },
+              {
+                "service": "https://miller.com/"
+              },
+              {
+                "service": "https://miller.org/"
+              },
+              {
+                "service": "https://miranda.com/"
+              },
+              {
+                "service": "https://monroe.info/"
+              },
+              {
+                "service": "https://moore.com/"
+              },
+              {
+                "service": "https://morgan-brooks.net/"
+              },
+              {
+                "service": "https://morris.com/"
+              },
+              {
+                "service": "https://morrison.com/"
+              },
+              {
+                "service": "https://morse.biz/"
+              },
+              {
+                "service": "https://murphy-warren.com/"
+              },
+              {
+                "service": "https://murphy.org/"
+              },
+              {
+                "service": "https://nelson.com/"
+              },
+              {
+                "service": "https://nguyen.org/"
+              },
+              {
+                "service": "https://nichols.org/"
+              },
+              {
+                "service": "https://osborne.info/"
+              },
+              {
+                "service": "https://palmer.com/"
+              },
+              {
+                "service": "https://parker.com/"
+              },
+              {
+                "service": "https://parks-dean.biz/"
+              },
+              {
+                "service": "https://payne.info/"
+              },
+              {
+                "service": "https://pennington-johnson.com/"
+              },
+              {
+                "service": "https://perry.net/"
+              },
+              {
+                "service": "https://petty.com/"
+              },
+              {
+                "service": "https://porter.com/"
+              },
+              {
+                "service": "https://powell.biz/"
+              },
+              {
+                "service": "https://powers-king.net/"
+              },
+              {
+                "service": "https://price.info/"
+              },
+              {
+                "service": "https://quinn-medina.info/"
+              },
+              {
+                "service": "https://ramirez-mcdowell.com/"
+              },
+              {
+                "service": "https://ramsey.com/"
+              },
+              {
+                "service": "https://randall-doyle.com/"
+              },
+              {
+                "service": "https://reyes-barber.info/"
+              },
+              {
+                "service": "https://rice-green.org/"
+              },
+              {
+                "service": "https://rice.com/"
+              },
+              {
+                "service": "https://rivera-moore.com/"
+              },
+              {
+                "service": "https://rivera-valdez.com/"
+              },
+              {
+                "service": "https://roberts.biz/"
+              },
+              {
+                "service": "https://robertson-anderson.net/"
+              },
+              {
+                "service": "https://robinson-wood.com/"
+              },
+              {
+                "service": "https://robinson.net/"
+              },
+              {
+                "service": "https://rodriguez.com/"
+              },
+              {
+                "service": "https://rodriguez.info/"
+              },
+              {
+                "service": "https://rodriguez.org/"
+              },
+              {
+                "service": "https://rojas-young.info/"
+              },
+              {
+                "service": "https://rose.com/"
+              },
+              {
+                "service": "https://ross.com/"
+              },
+              {
+                "service": "https://rowe.com/"
+              },
+              {
+                "service": "https://rowe.org/"
+              },
+              {
+                "service": "https://russo-mendez.com/"
+              },
+              {
+                "service": "https://salazar.com/"
+              },
+              {
+                "service": "https://salinas-james.net/"
+              },
+              {
+                "service": "https://sanchez-perez.com/"
+              },
+              {
+                "service": "https://scott.com/"
+              },
+              {
+                "service": "https://shaw.com/"
+              },
+              {
+                "service": "https://shelton.com/"
+              },
+              {
+                "service": "https://silva-walls.net/"
+              },
+              {
+                "service": "https://smith-rodgers.com/"
+              },
+              {
+                "service": "https://smith.com/"
+              },
+              {
+                "service": "https://snyder.com/"
+              },
+              {
+                "service": "https://solis-vargas.com/"
+              },
+              {
+                "service": "https://stanley.biz/"
+              },
+              {
+                "service": "https://stewart.biz/"
+              },
+              {
+                "service": "https://stewart.com/"
+              },
+              {
+                "service": "https://summers.com/"
+              },
+              {
+                "service": "https://taylor.com/"
+              },
+              {
+                "service": "https://terrell.com/"
+              },
+              {
+                "service": "https://terry.com/"
+              },
+              {
+                "service": "https://thomas.org/"
+              },
+              {
+                "service": "https://thompson.com/"
+              },
+              {
+                "service": "https://todd.com/"
+              },
+              {
+                "service": "https://valdez-johnson.net/"
+              },
+              {
+                "service": "https://wade.info/"
+              },
+              {
+                "service": "https://wallace.com/"
+              },
+              {
+                "service": "https://warren-smith.com/"
+              },
+              {
+                "service": "https://watkins.biz/"
+              },
+              {
+                "service": "https://watts.info/"
+              },
+              {
+                "service": "https://webb.com/"
+              },
+              {
+                "service": "https://webb.info/"
+              },
+              {
+                "service": "https://weber-watson.com/"
+              },
+              {
+                "service": "https://welch-thomas.com/"
+              },
+              {
+                "service": "https://white-sanchez.com/"
+              },
+              {
+                "service": "https://white.com/"
+              },
+              {
+                "service": "https://white.net/"
+              },
+              {
+                "service": "https://williams-quinn.net/"
+              },
+              {
+                "service": "https://williams-rodriguez.biz/"
+              },
+              {
+                "service": "https://williams.com/"
+              },
+              {
+                "service": "https://wilson.com/"
+              },
+              {
+                "service": "https://wong.com/"
+              },
+              {
+                "service": "https://wood.com/"
+              },
+              {
+                "service": "https://woods-soto.biz/"
+              },
+              {
+                "service": "https://woods.com/"
+              },
+              {
+                "service": "https://wright-morgan.org/"
+              },
+              {
+                "service": "https://www.aguilar-crawford.com/"
+              },
+              {
+                "service": "https://www.aguilar.com/"
+              },
+              {
+                "service": "https://www.aguilar.net/"
+              },
+              {
+                "service": "https://www.alexander-perez.com/"
+              },
+              {
+                "service": "https://www.alexander.net/"
+              },
+              {
+                "service": "https://www.allen.com/"
+              },
+              {
+                "service": "https://www.anderson-lawrence.com/"
+              },
+              {
+                "service": "https://www.armstrong.com/"
+              },
+              {
+                "service": "https://www.austin.com/"
+              },
+              {
+                "service": "https://www.baker.com/"
+              },
+              {
+                "service": "https://www.baker.org/"
+              },
+              {
+                "service": "https://www.barker-baker.info/"
+              },
+              {
+                "service": "https://www.barnes.com/"
+              },
+              {
+                "service": "https://www.bell.org/"
+              },
+              {
+                "service": "https://www.bishop-carr.com/"
+              },
+              {
+                "service": "https://www.blake.com/"
+              },
+              {
+                "service": "https://www.blanchard-flynn.org/"
+              },
+              {
+                "service": "https://www.booker.org/"
+              },
+              {
+                "service": "https://www.bowers.org/"
+              },
+              {
+                "service": "https://www.boyd.com/"
+              },
+              {
+                "service": "https://www.boyer.com/"
+              },
+              {
+                "service": "https://www.bradshaw.net/"
+              },
+              {
+                "service": "https://www.brennan-herman.com/"
+              },
+              {
+                "service": "https://www.brewer.com/"
+              },
+              {
+                "service": "https://www.brown-chavez.org/"
+              },
+              {
+                "service": "https://www.brown-smith.biz/"
+              },
+              {
+                "service": "https://www.buckley.com/"
+              },
+              {
+                "service": "https://www.burch.org/"
+              },
+              {
+                "service": "https://www.burke.com/"
+              },
+              {
+                "service": "https://www.burton.biz/"
+              },
+              {
+                "service": "https://www.bush.net/"
+              },
+              {
+                "service": "https://www.cabrera-neal.org/"
+              },
+              {
+                "service": "https://www.cameron-rosales.com/"
+              },
+              {
+                "service": "https://www.campbell.org/"
+              },
+              {
+                "service": "https://www.carney.com/"
+              },
+              {
+                "service": "https://www.carrillo-allen.com/"
+              },
+              {
+                "service": "https://www.carrillo.biz/"
+              },
+              {
+                "service": "https://www.castillo.com/"
+              },
+              {
+                "service": "https://www.cervantes-mcconnell.info/"
+              },
+              {
+                "service": "https://www.chambers.biz/"
+              },
+              {
+                "service": "https://www.chang-jones.net/"
+              },
+              {
+                "service": "https://www.chavez.com/"
+              },
+              {
+                "service": "https://www.cherry-allen.net/"
+              },
+              {
+                "service": "https://www.clements.biz/"
+              },
+              {
+                "service": "https://www.collins-walter.com/"
+              },
+              {
+                "service": "https://www.cook-elliott.net/"
+              },
+              {
+                "service": "https://www.cooper-patton.com/"
+              },
+              {
+                "service": "https://www.cooper.info/"
+              },
+              {
+                "service": "https://www.cunningham.com/"
+              },
+              {
+                "service": "https://www.davis-campos.com/"
+              },
+              {
+                "service": "https://www.davis.com/"
+              },
+              {
+                "service": "https://www.diaz.com/"
+              },
+              {
+                "service": "https://www.dixon.com/"
+              },
+              {
+                "service": "https://www.dominguez.com/"
+              },
+              {
+                "service": "https://www.edwards-price.com/"
+              },
+              {
+                "service": "https://www.edwards.com/"
+              },
+              {
+                "service": "https://www.espinoza-richard.biz/"
+              },
+              {
+                "service": "https://www.estrada.com/"
+              },
+              {
+                "service": "https://www.fisher-thompson.com/"
+              },
+              {
+                "service": "https://www.fisher.com/"
+              },
+              {
+                "service": "https://www.fitzpatrick.com/"
+              },
+              {
+                "service": "https://www.flores.org/"
+              },
+              {
+                "service": "https://www.ford-brooks.net/"
+              },
+              {
+                "service": "https://www.ford.info/"
+              },
+              {
+                "service": "https://www.francis.com/"
+              },
+              {
+                "service": "https://www.frank.biz/"
+              },
+              {
+                "service": "https://www.garcia.biz/"
+              },
+              {
+                "service": "https://www.garcia.com/"
+              },
+              {
+                "service": "https://www.george.org/"
+              },
+              {
+                "service": "https://www.gilbert.com/"
+              },
+              {
+                "service": "https://www.gomez-sullivan.com/"
+              },
+              {
+                "service": "https://www.gonzalez.org/"
+              },
+              {
+                "service": "https://www.gould.com/"
+              },
+              {
+                "service": "https://www.greer.com/"
+              },
+              {
+                "service": "https://www.griffith-archer.com/"
+              },
+              {
+                "service": "https://www.gross.info/"
+              },
+              {
+                "service": "https://www.guerrero-fuller.com/"
+              },
+              {
+                "service": "https://www.hahn.com/"
+              },
+              {
+                "service": "https://www.hale-walker.org/"
+              },
+              {
+                "service": "https://www.hammond.com/"
+              },
+              {
+                "service": "https://www.hancock.com/"
+              },
+              {
+                "service": "https://www.hancock.info/"
+              },
+              {
+                "service": "https://www.hansen.com/"
+              },
+              {
+                "service": "https://www.harris.com/"
+              },
+              {
+                "service": "https://www.hart-leonard.com/"
+              },
+              {
+                "service": "https://www.henderson.com/"
+              },
+              {
+                "service": "https://www.henson.com/"
+              },
+              {
+                "service": "https://www.hernandez.com/"
+              },
+              {
+                "service": "https://www.hernandez.info/"
+              },
+              {
+                "service": "https://www.hicks-ortega.info/"
+              },
+              {
+                "service": "https://www.hicks.com/"
+              },
+              {
+                "service": "https://www.hobbs-perez.com/"
+              },
+              {
+                "service": "https://www.hoffman-alvarado.com/"
+              },
+              {
+                "service": "https://www.holder-hall.com/"
+              },
+              {
+                "service": "https://www.hood.com/"
+              },
+              {
+                "service": "https://www.hopkins.net/"
+              },
+              {
+                "service": "https://www.horn.info/"
+              },
+              {
+                "service": "https://www.house-byrd.info/"
+              },
+              {
+                "service": "https://www.howard-tyler.com/"
+              },
+              {
+                "service": "https://www.jackson.org/"
+              },
+              {
+                "service": "https://www.jacobs.info/"
+              },
+              {
+                "service": "https://www.james-lozano.com/"
+              },
+              {
+                "service": "https://www.james-meyer.info/"
+              },
+              {
+                "service": "https://www.jimenez-chavez.net/"
+              },
+              {
+                "service": "https://www.johnson-gomez.com/"
+              },
+              {
+                "service": "https://www.johnson-miller.info/"
+              },
+              {
+                "service": "https://www.johnson.com/"
+              },
+              {
+                "service": "https://www.johnson.info/"
+              },
+              {
+                "service": "https://www.johnson.net/"
+              },
+              {
+                "service": "https://www.johnson.org/"
+              },
+              {
+                "service": "https://www.jones-hill.com/"
+              },
+              {
+                "service": "https://www.jones-thomas.com/"
+              },
+              {
+                "service": "https://www.jones-wu.com/"
+              },
+              {
+                "service": "https://www.jones.info/"
+              },
+              {
+                "service": "https://www.jordan-duncan.com/"
+              },
+              {
+                "service": "https://www.jordan-santiago.com/"
+              },
+              {
+                "service": "https://www.kane.com/"
+              },
+              {
+                "service": "https://www.kelly.com/"
+              },
+              {
+                "service": "https://www.kim.com/"
+              },
+              {
+                "service": "https://www.lane.com/"
+              },
+              {
+                "service": "https://www.larson.com/"
+              },
+              {
+                "service": "https://www.lawrence.biz/"
+              },
+              {
+                "service": "https://www.lee.com/"
+              },
+              {
+                "service": "https://www.lewis.com/"
+              },
+              {
+                "service": "https://www.liu.com/"
+              },
+              {
+                "service": "https://www.liu.org/"
+              },
+              {
+                "service": "https://www.long.info/"
+              },
+              {
+                "service": "https://www.lopez-banks.com/"
+              },
+              {
+                "service": "https://www.lopez.net/"
+              },
+              {
+                "service": "https://www.lutz.com/"
+              },
+              {
+                "service": "https://www.mack.com/"
+              },
+              {
+                "service": "https://www.marsh-may.info/"
+              },
+              {
+                "service": "https://www.martin.org/"
+              },
+              {
+                "service": "https://www.martinez.com/"
+              },
+              {
+                "service": "https://www.martinez.net/"
+              },
+              {
+                "service": "https://www.matthews-house.com/"
+              },
+              {
+                "service": "https://www.maynard-hart.org/"
+              },
+              {
+                "service": "https://www.mays.com/"
+              },
+              {
+                "service": "https://www.mccall-johnson.net/"
+              },
+              {
+                "service": "https://www.mcclure-johnson.biz/"
+              },
+              {
+                "service": "https://www.mccullough.com/"
+              },
+              {
+                "service": "https://www.mcdowell.com/"
+              },
+              {
+                "service": "https://www.medina.info/"
+              },
+              {
+                "service": "https://www.medina.org/"
+              },
+              {
+                "service": "https://www.mendez.com/"
+              },
+              {
+                "service": "https://www.meyer.com/"
+              },
+              {
+                "service": "https://www.miller-williams.com/"
+              },
+              {
+                "service": "https://www.miller-wright.com/"
+              },
+              {
+                "service": "https://www.mitchell.com/"
+              },
+              {
+                "service": "https://www.mitchell.org/"
+              },
+              {
+                "service": "https://www.moore-daniel.biz/"
+              },
+              {
+                "service": "https://www.moore.biz/"
+              },
+              {
+                "service": "https://www.mora.org/"
+              },
+              {
+                "service": "https://www.morales.com/"
+              },
+              {
+                "service": "https://www.murphy-moody.biz/"
+              },
+              {
+                "service": "https://www.murphy.info/"
+              },
+              {
+                "service": "https://www.murray.biz/"
+              },
+              {
+                "service": "https://www.myers.net/"
+              },
+              {
+                "service": "https://www.neal.com/"
+              },
+              {
+                "service": "https://www.newman-marshall.com/"
+              },
+              {
+                "service": "https://www.newman.com/"
+              },
+              {
+                "service": "https://www.noble.com/"
+              },
+              {
+                "service": "https://www.odonnell-hall.com/"
+              },
+              {
+                "service": "https://www.olson.com/"
+              },
+              {
+                "service": "https://www.ortiz.biz/"
+              },
+              {
+                "service": "https://www.page.com/"
+              },
+              {
+                "service": "https://www.peterson.org/"
+              },
+              {
+                "service": "https://www.phillips-gibson.org/"
+              },
+              {
+                "service": "https://www.porter-alvarado.org/"
+              },
+              {
+                "service": "https://www.powell.com/"
+              },
+              {
+                "service": "https://www.powers-sanders.com/"
+              },
+              {
+                "service": "https://www.ramirez.com/"
+              },
+              {
+                "service": "https://www.ramirez.info/"
+              },
+              {
+                "service": "https://www.ramirez.org/"
+              },
+              {
+                "service": "https://www.ramos-stephens.com/"
+              },
+              {
+                "service": "https://www.randall.com/"
+              },
+              {
+                "service": "https://www.rice.com/"
+              },
+              {
+                "service": "https://www.richardson.com/"
+              },
+              {
+                "service": "https://www.riley.com/"
+              },
+              {
+                "service": "https://www.roberson.biz/"
+              },
+              {
+                "service": "https://www.roberts.com/"
+              },
+              {
+                "service": "https://www.robinson-gray.com/"
+              },
+              {
+                "service": "https://www.robinson-johnson.com/"
+              },
+              {
+                "service": "https://www.rodriguez.com/"
+              },
+              {
+                "service": "https://www.rogers.info/"
+              },
+              {
+                "service": "https://www.rose.com/"
+              },
+              {
+                "service": "https://www.russell.com/"
+              },
+              {
+                "service": "https://www.salazar.net/"
+              },
+              {
+                "service": "https://www.sampson.net/"
+              },
+              {
+                "service": "https://www.sanchez.net/"
+              },
+              {
+                "service": "https://www.sanders-walters.org/"
+              },
+              {
+                "service": "https://www.schultz.com/"
+              },
+              {
+                "service": "https://www.silva.com/"
+              },
+              {
+                "service": "https://www.simpson.net/"
+              },
+              {
+                "service": "https://www.small.com/"
+              },
+              {
+                "service": "https://www.smith-sullivan.info/"
+              },
+              {
+                "service": "https://www.smith.com/"
+              },
+              {
+                "service": "https://www.snyder-nichols.com/"
+              },
+              {
+                "service": "https://www.snyder.com/"
+              },
+              {
+                "service": "https://www.spears.com/"
+              },
+              {
+                "service": "https://www.steele-allen.com/"
+              },
+              {
+                "service": "https://www.stephenson-orr.com/"
+              },
+              {
+                "service": "https://www.stewart.net/"
+              },
+              {
+                "service": "https://www.stokes.com/"
+              },
+              {
+                "service": "https://www.tapia-carpenter.com/"
+              },
+              {
+                "service": "https://www.taylor.com/"
+              },
+              {
+                "service": "https://www.thomas-harris.com/"
+              },
+              {
+                "service": "https://www.thomas-rivers.info/"
+              },
+              {
+                "service": "https://www.torres-pennington.com/"
+              },
+              {
+                "service": "https://www.torres.com/"
+              },
+              {
+                "service": "https://www.valencia-moon.com/"
+              },
+              {
+                "service": "https://www.vasquez.com/"
+              },
+              {
+                "service": "https://www.villa.com/"
+              },
+              {
+                "service": "https://www.vincent.com/"
+              },
+              {
+                "service": "https://www.wallace-lawrence.com/"
+              },
+              {
+                "service": "https://www.ward.com/"
+              },
+              {
+                "service": "https://www.watson.biz/"
+              },
+              {
+                "service": "https://www.webb-mcbride.net/"
+              },
+              {
+                "service": "https://www.welch-archer.com/"
+              },
+              {
+                "service": "https://www.welch.com/"
+              },
+              {
+                "service": "https://www.west.com/"
+              },
+              {
+                "service": "https://www.west.net/"
+              },
+              {
+                "service": "https://www.wilcox.com/"
+              },
+              {
+                "service": "https://www.williams-willis.com/"
+              },
+              {
+                "service": "https://www.williams.com/"
+              },
+              {
+                "service": "https://www.williamson-jones.org/"
+              },
+              {
+                "service": "https://www.wilson.net/"
+              },
+              {
+                "service": "https://www.woods-anderson.com/"
+              },
+              {
+                "service": "https://www.woods.com/"
+              },
+              {
+                "service": "https://www.wright-riley.com/"
+              },
+              {
+                "service": "https://www.wright-wilson.info/"
+              },
+              {
+                "service": "https://www.yates.org/"
+              },
+              {
+                "service": "https://www.young-santana.com/"
+              },
+              {
+                "service": "https://yates.com/"
+              },
+              {
+                "service": "https://young-bowman.info/"
+              },
+              {
+                "service": "https://young-knight.com/"
+              },
+              {
+                "service": "https://zavala.com/"
+              }
+            ],
+            "row_count": 945,
+            "execution_time_ms": 5.341768264770508,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01JsW97ioiVcVw4V1khVKHo3', input={'query': \"SELECT username, owner_id, service FROM internet_accounts WHERE username LIKE '%crypto%' OR username LIKE '%bitcoin%' LIMIT 10\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username, owner_id, service FROM internet_accounts WHERE username LIKE '%crypto%' OR username LIKE '%bitcoin%' LIMIT 10"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [],
+            "row_count": 0,
+            "execution_time_ms": 1.5101432800292969,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_018ntJYyo1wT2cY9B5DvxKQM', input={'query': 'SELECT username, owner_id, service FROM internet_accounts ORDER BY RANDOM() LIMIT 10'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username, owner_id, service FROM internet_accounts ORDER BY RANDOM() LIMIT 10"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "username": "hrusso",
+                "owner_id": "pers-0108",
+                "service": "http://jones.com/"
+              },
+              {
+                "username": "wsandoval",
+                "owner_id": "pers-0323",
+                "service": "http://www.long.com/"
+              },
+              {
+                "username": "robertharvey",
+                "owner_id": "pers-0337",
+                "service": "https://www.castillo.com/"
+              },
+              {
+                "username": "kellyarmstrong",
+                "owner_id": "pers-0333",
+                "service": "https://www.mccullough.com/"
+              },
+              {
+                "username": "stephencrawford",
+                "owner_id": "pers-0191",
+                "service": "https://ramsey.com/"
+              },
+              {
+                "username": "stewartlaura",
+                "owner_id": "pers-0363",
+                "service": "http://king.biz/"
+              },
+              {
+                "username": "adamanderson",
+                "owner_id": "pers-0202",
+                "service": "https://www.cameron-rosales.com/"
+              },
+              {
+                "username": "sierrawolfe",
+                "owner_id": "pers-0433",
+                "service": "http://taylor.com/"
+              },
+              {
+                "username": "seansanders",
+                "owner_id": "pers-0465",
+                "service": "https://kane.com/"
+              },
+              {
+                "username": "fhall",
+                "owner_id": "pers-0237",
+                "service": "http://www.henderson.com/"
+              }
+            ],
+            "row_count": 10,
+            "execution_time_ms": 1.6939640045166016,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_014dN1M8MHNYn7nQJmB6ivce', input={'query': \"SELECT policy_no, owner_id, provider FROM insurance_policies WHERE policy_no = 'FmC-05842435'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT policy_no, owner_id, provider FROM insurance_policies WHERE policy_no = 'FmC-05842435'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "policy_no": "FmC-05842435",
+                "owner_id": "pers-0004",
+                "provider": "Alexander, Parker and Diaz"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 1.1899471282958984,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_018TZsHRovu1vYBHFQusdkM4', input={'query': \"SELECT full_name, phone FROM people WHERE person_id = 'pers-0004'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT full_name, phone FROM people WHERE person_id = 'pers-0004'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "full_name": "Katherine Greene",
+                "phone": "8519448428"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 0.9889602661132812,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01KuBvDMUmVNVoaw3s6FFkdW', input={'query': \"SELECT COUNT(*) FROM pets WHERE owner_id = 'pers-0004'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM pets WHERE owner_id = 'pers-0004'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 2,
+            "row_count": 1,
+            "execution_time_ms": 0.7638931274414062,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_014QCLh2ZXF3DARbscgekJH9', input={'query': \"SELECT COUNT(*) FROM credit_cards WHERE owner_id = 'pers-0004'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM credit_cards WHERE owner_id = 'pers-0004'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 1,
+            "row_count": 1,
+            "execution_time_ms": 0.9109973907470703,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01HsVG7n2SmRej8FoVSeKLVa', input={'query': \"SELECT ssn, diagnosis FROM medical_records WHERE owner_id = 'pers-0004'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT ssn, diagnosis FROM medical_records WHERE owner_id = 'pers-0004'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": false,
+            "result": null,
+            "row_count": 0,
+            "execution_time_ms": 1.3709068298339844,
+            "error": "no such column: ssn"
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01WUZgbrfVcBTBPn26EQM8fV', input={'query': 'PRAGMA table_info(medical_records)'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "PRAGMA table_info(medical_records)"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": -1,
+            "row_count": -1,
+            "execution_time_ms": 0.7679462432861328,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01945BN5h4McQPnw5GFqAF4m', input={'query': 'SELECT * FROM medical_records LIMIT 3'}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT * FROM medical_records LIMIT 3"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "record_id": "med-0001",
+                "owner_id": "pers-0001",
+                "date": null,
+                "provider": null,
+                "diagnosis": "Allergy",
+                "treatment": null,
+                "medications": null,
+                "follow_up": null
+              },
+              {
+                "record_id": "med-0002",
+                "owner_id": "pers-0002",
+                "date": null,
+                "provider": null,
+                "diagnosis": "Allergy",
+                "treatment": null,
+                "medications": null,
+                "follow_up": null
+              },
+              {
+                "record_id": "med-0003",
+                "owner_id": "pers-0003",
+                "date": null,
+                "provider": null,
+                "diagnosis": "Diabetes",
+                "treatment": null,
+                "medications": null,
+                "follow_up": null
+              }
+            ],
+            "row_count": 3,
+            "execution_time_ms": 0.7867813110351562,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01JLhKFcdG4r7NWxu7DHje54', input={'query': \"SELECT record_id, owner_id, diagnosis FROM medical_records WHERE diagnosis = 'Hypertension' LIMIT 5\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT record_id, owner_id, diagnosis FROM medical_records WHERE diagnosis = 'Hypertension' LIMIT 5"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "record_id": "med-0004",
+                "owner_id": "pers-0004",
+                "diagnosis": "Hypertension"
+              },
+              {
+                "record_id": "med-0006",
+                "owner_id": "pers-0010",
+                "diagnosis": "Hypertension"
+              },
+              {
+                "record_id": "med-0013",
+                "owner_id": "pers-0024",
+                "diagnosis": "Hypertension"
+              },
+              {
+                "record_id": "med-0024",
+                "owner_id": "pers-0045",
+                "diagnosis": "Hypertension"
+              },
+              {
+                "record_id": "med-0027",
+                "owner_id": "pers-0054",
+                "diagnosis": "Hypertension"
+              }
+            ],
+            "row_count": 5,
+            "execution_time_ms": 1.4390945434570312,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01CARVcqgyBkswsNSGXRJxN3', input={'query': \"SELECT COUNT(*) FROM medical_records WHERE diagnosis = 'Hypertension'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM medical_records WHERE diagnosis = 'Hypertension'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 45,
+            "row_count": 1,
+            "execution_time_ms": 0.9508132934570312,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_015jJV7UHtAoGRWsrjEXedad', input={'query': \"SELECT license_plate, make, model, year FROM vehicles WHERE license_plate LIKE '4%' ORDER BY license_plate\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT license_plate, make, model, year FROM vehicles WHERE license_plate LIKE '4%' ORDER BY license_plate"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "license_plate": "4-02827",
+                "make": "Tran, Patterson and Spencer",
+                "model": "Azure",
+                "year": 2019
+              },
+              {
+                "license_plate": "4-28433K",
+                "make": "Roberts PLC",
+                "model": "LightCyan",
+                "year": 2005
+              },
+              {
+                "license_plate": "4-28932",
+                "make": "Caldwell, Hanson and Blackwell",
+                "model": "HotPink",
+                "year": 2009
+              },
+              {
+                "license_plate": "4-E1581",
+                "make": "Kelly PLC",
+                "model": "GoldenRod",
+                "year": 2015
+              },
+              {
+                "license_plate": "4-I9234",
+                "make": "Levine, Jackson and Johnson",
+                "model": "Wheat",
+                "year": 2024
+              },
+              {
+                "license_plate": "4-Y0684",
+                "make": "Stone-Holmes",
+                "model": "DeepSkyBlue",
+                "year": 2000
+              },
+              {
+                "license_plate": "40-WU62",
+                "make": "Ortiz, Barry and Montgomery",
+                "model": "Orange",
+                "year": 2004
+              },
+              {
+                "license_plate": "405RO",
+                "make": "Jenkins-Miller",
+                "model": "LightGoldenRodYellow",
+                "year": 2003
+              },
+              {
+                "license_plate": "40F M66",
+                "make": "Miller PLC",
+                "model": "Cornsilk",
+                "year": 2024
+              },
+              {
+                "license_plate": "412-FKB",
+                "make": "Hill-Mitchell",
+                "model": "DarkGreen",
+                "year": 2007
+              },
+              {
+                "license_plate": "413K",
+                "make": "Sweeney, Marks and Hernandez",
+                "model": "SteelBlue",
+                "year": 2013
+              },
+              {
+                "license_plate": "414-QLVO",
+                "make": "Suarez, Mason and Jackson",
+                "model": "DarkTurquoise",
+                "year": 2006
+              },
+              {
+                "license_plate": "416-ORP",
+                "make": "Downs-Jones",
+                "model": "SlateGray",
+                "year": 2020
+              },
+              {
+                "license_plate": "419-AUH",
+                "make": "Lane, Carson and Lee",
+                "model": "Tomato",
+                "year": 2017
+              },
+              {
+                "license_plate": "41L G89",
+                "make": "Miller, Kirk and Bowen",
+                "model": "RoyalBlue",
+                "year": 2003
+              },
+              {
+                "license_plate": "41XZ1",
+                "make": "Griffin PLC",
+                "model": "RoyalBlue",
+                "year": 2019
+              },
+              {
+                "license_plate": "420 CRI",
+                "make": "Clark PLC",
+                "model": "LightBlue",
+                "year": 2011
+              },
+              {
+                "license_plate": "42I U56",
+                "make": "Carey Group",
+                "model": "PaleGreen",
+                "year": 2006
+              },
+              {
+                "license_plate": "43-M293",
+                "make": "Stuart PLC",
+                "model": "Violet",
+                "year": 2020
+              },
+              {
+                "license_plate": "430 5RP",
+                "make": "Jackson, Velasquez and Strong",
+                "model": "GoldenRod",
+                "year": 1999
+              },
+              {
+                "license_plate": "4313",
+                "make": "Glenn, Martinez and Bowman",
+                "model": "MediumPurple",
+                "year": 2018
+              },
+              {
+                "license_plate": "4363",
+                "make": "Vang-Diaz",
+                "model": "WhiteSmoke",
+                "year": 1997
+              },
+              {
+                "license_plate": "439-KAT",
+                "make": "Simmons, Santiago and Franklin",
+                "model": "PaleGreen",
+                "year": 2019
+              },
+              {
+                "license_plate": "443-JHD",
+                "make": "Irwin and Sons",
+                "model": "Gray",
+                "year": 2004
+              },
+              {
+                "license_plate": "44K O65",
+                "make": "Bowman-Harris",
+                "model": "LightGray",
+                "year": 2023
+              },
+              {
+                "license_plate": "4514 LB",
+                "make": "Orr, Smith and Grant",
+                "model": "Khaki",
+                "year": 2022
+              },
+              {
+                "license_plate": "456Z",
+                "make": "Olson Inc",
+                "model": "Magenta",
+                "year": 2021
+              },
+              {
+                "license_plate": "45M\u2022889",
+                "make": "Holmes Inc",
+                "model": "MistyRose",
+                "year": 1997
+              },
+              {
+                "license_plate": "461 TYX",
+                "make": "Adams, Hernandez and Riggs",
+                "model": "LimeGreen",
+                "year": 2005
+              },
+              {
+                "license_plate": "464285",
+                "make": "Wilcox, Fisher and Martinez",
+                "model": "PowderBlue",
+                "year": 2009
+              },
+              {
+                "license_plate": "46W E98",
+                "make": "Austin Ltd",
+                "model": "LightBlue",
+                "year": 1999
+              },
+              {
+                "license_plate": "473 AOY",
+                "make": "Alvarez, Hall and Duran",
+                "model": "WhiteSmoke",
+                "year": 2006
+              },
+              {
+                "license_plate": "476 ELY",
+                "make": "Ward PLC",
+                "model": "Lavender",
+                "year": 2002
+              },
+              {
+                "license_plate": "477 HWC",
+                "make": "Morrison Inc",
+                "model": "SlateGray",
+                "year": 2004
+              },
+              {
+                "license_plate": "478O5",
+                "make": "Pugh Ltd",
+                "model": "Indigo",
+                "year": 1995
+              },
+              {
+                "license_plate": "47CC5",
+                "make": "Ellis, Ali and Estrada",
+                "model": "Lavender",
+                "year": 2017
+              },
+              {
+                "license_plate": "48-7638T",
+                "make": "Mckinney, Underwood and Hebert",
+                "model": "Linen",
+                "year": 2007
+              },
+              {
+                "license_plate": "48-GW23",
+                "make": "Hunter, Smith and Sawyer",
+                "model": "Brown",
+                "year": 2004
+              },
+              {
+                "license_plate": "48-Z903",
+                "make": "Gray-Chambers",
+                "model": "MistyRose",
+                "year": 2006
+              },
+              {
+                "license_plate": "483-FDHO",
+                "make": "Fitzgerald, Everett and Mclaughlin",
+                "model": "SkyBlue",
+                "year": 2006
+              },
+              {
+                "license_plate": "48K S24",
+                "make": "Young-Flores",
+                "model": "Black",
+                "year": 2016
+              },
+              {
+                "license_plate": "490-136",
+                "make": "Barron and Sons",
+                "model": "MediumPurple",
+                "year": 2001
+              },
+              {
+                "license_plate": "492 TNA",
+                "make": "Brown Group",
+                "model": "PaleVioletRed",
+                "year": 2000
+              },
+              {
+                "license_plate": "496 SFZ",
+                "make": "Conley LLC",
+                "model": "Blue",
+                "year": 2003
+              },
+              {
+                "license_plate": "4A080",
+                "make": "Brown, Gross and Stokes",
+                "model": "Maroon",
+                "year": 1998
+              },
+              {
+                "license_plate": "4C K9220",
+                "make": "Hood-Marshall",
+                "model": "Plum",
+                "year": 1996
+              },
+              {
+                "license_plate": "4DF S45",
+                "make": "Webb Group",
+                "model": "LightGreen",
+                "year": 2007
+              },
+              {
+                "license_plate": "4DM 276",
+                "make": "Cowan Inc",
+                "model": "Linen",
+                "year": 2004
+              },
+              {
+                "license_plate": "4DO U80",
+                "make": "Oliver-Ruiz",
+                "model": "Gainsboro",
+                "year": 2005
+              },
+              {
+                "license_plate": "4GO N78",
+                "make": "French and Sons",
+                "model": "Linen",
+                "year": 2018
+              },
+              {
+                "license_plate": "4GV 284",
+                "make": "Reeves PLC",
+                "model": "Blue",
+                "year": 2015
+              },
+              {
+                "license_plate": "4H 3O8LLY",
+                "make": "Hall, Brown and Williams",
+                "model": "LawnGreen",
+                "year": 2017
+              },
+              {
+                "license_plate": "4HPQ 67",
+                "make": "Henry-Russell",
+                "model": "LimeGreen",
+                "year": 2011
+              },
+              {
+                "license_plate": "4HS 516",
+                "make": "Johnson-Ramos",
+                "model": "MediumVioletRed",
+                "year": 2022
+              },
+              {
+                "license_plate": "4K I9592",
+                "make": "Lynn-Sims",
+                "model": "DarkKhaki",
+                "year": 2021
+              },
+              {
+                "license_plate": "4L P4146",
+                "make": "Taylor Ltd",
+                "model": "Tomato",
+                "year": 1995
+              },
+              {
+                "license_plate": "4L184",
+                "make": "Taylor Group",
+                "model": "DarkSlateGray",
+                "year": 2021
+              },
+              {
+                "license_plate": "4N181",
+                "make": "Becker-Scott",
+                "model": "DimGray",
+                "year": 1998
+              },
+              {
+                "license_plate": "4TAO160",
+                "make": "Thomas-Ho",
+                "model": "LightGreen",
+                "year": 2012
+              },
+              {
+                "license_plate": "4TP3351",
+                "make": "Smith, Lewis and Middleton",
+                "model": "Crimson",
+                "year": 2022
+              },
+              {
+                "license_plate": "4W 64666",
+                "make": "Ramirez-Lee",
+                "model": "Azure",
+                "year": 2007
+              },
+              {
+                "license_plate": "4XQ96",
+                "make": "Simpson-Bender",
+                "model": "LimeGreen",
+                "year": 2021
+              },
+              {
+                "license_plate": "4Y 01204",
+                "make": "Ortega-Morgan",
+                "model": "HoneyDew",
+                "year": 1998
+              }
+            ],
+            "row_count": 63,
+            "execution_time_ms": 1.0938644409179688,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01FgHLqcApNXWHoEaLxXSRSj', input={'query': \"SELECT v.license_plate, v.owner_id, p.full_name FROM vehicles v JOIN people p ON v.owner_id = p.person_id WHERE v.license_plate LIKE '4%' ORDER BY v.license_plate\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT v.license_plate, v.owner_id, p.full_name FROM vehicles v JOIN people p ON v.owner_id = p.person_id WHERE v.license_plate LIKE '4%' ORDER BY v.license_plate"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "license_plate": "4-02827",
+                "owner_id": "pers-0448",
+                "full_name": "Kim Dyer"
+              },
+              {
+                "license_plate": "4-28433K",
+                "owner_id": "pers-0108",
+                "full_name": "Tammy Roberts"
+              },
+              {
+                "license_plate": "4-28932",
+                "owner_id": "pers-0019",
+                "full_name": "Jonathan Kelley"
+              },
+              {
+                "license_plate": "4-E1581",
+                "owner_id": "pers-0443",
+                "full_name": "Anthony Stewart"
+              },
+              {
+                "license_plate": "4-I9234",
+                "owner_id": "pers-0351",
+                "full_name": "Michael Schaefer"
+              },
+              {
+                "license_plate": "4-Y0684",
+                "owner_id": "pers-0067",
+                "full_name": "Megan Sutton"
+              },
+              {
+                "license_plate": "40-WU62",
+                "owner_id": "pers-0280",
+                "full_name": "Melissa Baker"
+              },
+              {
+                "license_plate": "405RO",
+                "owner_id": "pers-0090",
+                "full_name": "Jennifer Harvey"
+              },
+              {
+                "license_plate": "40F M66",
+                "owner_id": "pers-0078",
+                "full_name": "Laura Wagner"
+              },
+              {
+                "license_plate": "412-FKB",
+                "owner_id": "pers-0362",
+                "full_name": "Courtney Rangel"
+              },
+              {
+                "license_plate": "413K",
+                "owner_id": "pers-0313",
+                "full_name": "John Walker"
+              },
+              {
+                "license_plate": "414-QLVO",
+                "owner_id": "pers-0114",
+                "full_name": "Brenda Weber"
+              },
+              {
+                "license_plate": "416-ORP",
+                "owner_id": "pers-0423",
+                "full_name": "Stanley Henry"
+              },
+              {
+                "license_plate": "419-AUH",
+                "owner_id": "pers-0484",
+                "full_name": "Hannah Harris"
+              },
+              {
+                "license_plate": "41L G89",
+                "owner_id": "pers-0446",
+                "full_name": "Christopher Ray"
+              },
+              {
+                "license_plate": "41XZ1",
+                "owner_id": "pers-0174",
+                "full_name": "Christopher Martinez"
+              },
+              {
+                "license_plate": "420 CRI",
+                "owner_id": "pers-0374",
+                "full_name": "Lisa Norris"
+              },
+              {
+                "license_plate": "42I U56",
+                "owner_id": "pers-0282",
+                "full_name": "Bonnie Robertson"
+              },
+              {
+                "license_plate": "43-M293",
+                "owner_id": "pers-0116",
+                "full_name": "Daniel Gamble"
+              },
+              {
+                "license_plate": "430 5RP",
+                "owner_id": "pers-0136",
+                "full_name": "Jessica Carson"
+              },
+              {
+                "license_plate": "4313",
+                "owner_id": "pers-0462",
+                "full_name": "Emily Crawford"
+              },
+              {
+                "license_plate": "4363",
+                "owner_id": "pers-0049",
+                "full_name": "Roger Sanders"
+              },
+              {
+                "license_plate": "439-KAT",
+                "owner_id": "pers-0199",
+                "full_name": "Alexandra Brown"
+              },
+              {
+                "license_plate": "443-JHD",
+                "owner_id": "pers-0018",
+                "full_name": "Matthew Winters"
+              },
+              {
+                "license_plate": "44K O65",
+                "owner_id": "pers-0343",
+                "full_name": "Christina Grant"
+              },
+              {
+                "license_plate": "4514 LB",
+                "owner_id": "pers-0420",
+                "full_name": "Gregory Cook"
+              },
+              {
+                "license_plate": "456Z",
+                "owner_id": "pers-0350",
+                "full_name": "Jason Ruiz"
+              },
+              {
+                "license_plate": "45M\u2022889",
+                "owner_id": "pers-0255",
+                "full_name": "James Burgess"
+              },
+              {
+                "license_plate": "461 TYX",
+                "owner_id": "pers-0472",
+                "full_name": "Wesley Silva"
+              },
+              {
+                "license_plate": "464285",
+                "owner_id": "pers-0341",
+                "full_name": "Andrea Sampson"
+              },
+              {
+                "license_plate": "46W E98",
+                "owner_id": "pers-0393",
+                "full_name": "Pamela Oneill"
+              },
+              {
+                "license_plate": "473 AOY",
+                "owner_id": "pers-0073",
+                "full_name": "Paul Reyes"
+              },
+              {
+                "license_plate": "476 ELY",
+                "owner_id": "pers-0297",
+                "full_name": "John Johnson"
+              },
+              {
+                "license_plate": "477 HWC",
+                "owner_id": "pers-0069",
+                "full_name": "Priscilla Gardner"
+              },
+              {
+                "license_plate": "478O5",
+                "owner_id": "pers-0074",
+                "full_name": "Dominique Brown"
+              },
+              {
+                "license_plate": "47CC5",
+                "owner_id": "pers-0272",
+                "full_name": "Lisa Williams"
+              },
+              {
+                "license_plate": "48-7638T",
+                "owner_id": "pers-0147",
+                "full_name": "Tammy Gonzalez"
+              },
+              {
+                "license_plate": "48-GW23",
+                "owner_id": "pers-0194",
+                "full_name": "Kayla Roberts"
+              },
+              {
+                "license_plate": "48-Z903",
+                "owner_id": "pers-0174",
+                "full_name": "Christopher Martinez"
+              },
+              {
+                "license_plate": "483-FDHO",
+                "owner_id": "pers-0360",
+                "full_name": "Samantha Parsons"
+              },
+              {
+                "license_plate": "48K S24",
+                "owner_id": "pers-0194",
+                "full_name": "Kayla Roberts"
+              },
+              {
+                "license_plate": "490-136",
+                "owner_id": "pers-0207",
+                "full_name": "Emily Williams"
+              },
+              {
+                "license_plate": "492 TNA",
+                "owner_id": "pers-0442",
+                "full_name": "Sharon Henry"
+              },
+              {
+                "license_plate": "496 SFZ",
+                "owner_id": "pers-0236",
+                "full_name": "Gina Taylor"
+              },
+              {
+                "license_plate": "4A080",
+                "owner_id": "pers-0280",
+                "full_name": "Melissa Baker"
+              },
+              {
+                "license_plate": "4C K9220",
+                "owner_id": "pers-0099",
+                "full_name": "Claire Kirby"
+              },
+              {
+                "license_plate": "4DF S45",
+                "owner_id": "pers-0146",
+                "full_name": "Christopher Beck"
+              },
+              {
+                "license_plate": "4DM 276",
+                "owner_id": "pers-0475",
+                "full_name": "Brian Johnson"
+              },
+              {
+                "license_plate": "4DO U80",
+                "owner_id": "pers-0187",
+                "full_name": "John Williams"
+              },
+              {
+                "license_plate": "4GO N78",
+                "owner_id": "pers-0011",
+                "full_name": "Jacob Pacheco"
+              },
+              {
+                "license_plate": "4GV 284",
+                "owner_id": "pers-0308",
+                "full_name": "Teresa Long"
+              },
+              {
+                "license_plate": "4H 3O8LLY",
+                "owner_id": "pers-0134",
+                "full_name": "Tina Fox"
+              },
+              {
+                "license_plate": "4HPQ 67",
+                "owner_id": "pers-0355",
+                "full_name": "Julie Clarke"
+              },
+              {
+                "license_plate": "4HS 516",
+                "owner_id": "pers-0319",
+                "full_name": "Michael Morgan"
+              },
+              {
+                "license_plate": "4K I9592",
+                "owner_id": "pers-0449",
+                "full_name": "Theresa Shannon"
+              },
+              {
+                "license_plate": "4L P4146",
+                "owner_id": "pers-0286",
+                "full_name": "Tiffany Johnson"
+              },
+              {
+                "license_plate": "4L184",
+                "owner_id": "pers-0335",
+                "full_name": "Brenda Rhodes"
+              },
+              {
+                "license_plate": "4N181",
+                "owner_id": "pers-0126",
+                "full_name": "Gina Cantu"
+              },
+              {
+                "license_plate": "4TAO160",
+                "owner_id": "pers-0449",
+                "full_name": "Theresa Shannon"
+              },
+              {
+                "license_plate": "4TP3351",
+                "owner_id": "pers-0009",
+                "full_name": "Jonathan Navarro"
+              },
+              {
+                "license_plate": "4W 64666",
+                "owner_id": "pers-0008",
+                "full_name": "Christopher Bernard"
+              },
+              {
+                "license_plate": "4XQ96",
+                "owner_id": "pers-0379",
+                "full_name": "Gregory Fletcher"
+              },
+              {
+                "license_plate": "4Y 01204",
+                "owner_id": "pers-0136",
+                "full_name": "Jessica Carson"
+              }
+            ],
+            "row_count": 63,
+            "execution_time_ms": 2.933979034423828,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_0139Z8fK7ZmWgBGhyYp7a3BP', input={'query': \"SELECT license_plate, make, model, year FROM vehicles WHERE license_plate LIKE '%9999%'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT license_plate, make, model, year FROM vehicles WHERE license_plate LIKE '%9999%'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [],
+            "row_count": 0,
+            "execution_time_ms": 0.9250640869140625,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01XJwVgEyAMn4cR33ktzvbiM', input={'query': \"SELECT license_plate, make, model, year FROM vehicles WHERE license_plate LIKE '%999%'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT license_plate, make, model, year FROM vehicles WHERE license_plate LIKE '%999%'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "license_plate": "999-KUZJ",
+                "make": "Brown, Figueroa and Walsh",
+                "model": "Coral",
+                "year": 1999
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 1.024007797241211,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Mv1LR41yQwzPPwprBVqfUy', input={'query': \"SELECT v.license_plate, v.owner_id, p.full_name FROM vehicles v JOIN people p ON v.owner_id = p.person_id WHERE v.license_plate = '999-KUZJ'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT v.license_plate, v.owner_id, p.full_name FROM vehicles v JOIN people p ON v.owner_id = p.person_id WHERE v.license_plate = '999-KUZJ'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "license_plate": "999-KUZJ",
+                "owner_id": "pers-0352",
+                "full_name": "Thomas Smith"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 1.0259151458740234,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_018HhZQV5LSPmXyU1scdRGj4', input={'query': \"SELECT username, email FROM internet_accounts WHERE owner_id = 'pers-0352'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username, email FROM internet_accounts WHERE owner_id = 'pers-0352'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "username": "kbrown",
+                "email": "matthew14@hotmail.com"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 0.7171630859375,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01XAcXE8y1fzZAJtknoLN3pi', input={'query': \"SELECT policy_no FROM insurance_policies WHERE owner_id = 'pers-0352'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT policy_no FROM insurance_policies WHERE owner_id = 'pers-0352'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "policy_no": "qgK-50846636"
+              },
+              {
+                "policy_no": "mkp-17295890"
+              }
+            ],
+            "row_count": 2,
+            "execution_time_ms": 0.4360675811767578,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_013Ki5Vj3JZNZ2KowNjF4VBk', input={'query': \"SELECT record_id, diagnosis FROM medical_records WHERE owner_id = 'pers-0352'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT record_id, diagnosis FROM medical_records WHERE owner_id = 'pers-0352'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "record_id": "med-0178",
+                "diagnosis": "None"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 0.843048095703125,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01N7pV2vGQZ53s6eSNioaqv7', input={'query': \"SELECT COUNT(*) FROM vehicles WHERE owner_id = 'pers-0352'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM vehicles WHERE owner_id = 'pers-0352'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 1,
+            "row_count": 1,
+            "execution_time_ms": 1.0790824890136719,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01E87VzHLDsWnVbALXkwizkK', input={'query': \"SELECT COUNT(*) FROM pets WHERE owner_id = 'pers-0352'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM pets WHERE owner_id = 'pers-0352'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 3,
+            "row_count": 1,
+            "execution_time_ms": 0.9458065032958984,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01GUxV6RJWa2JqJdgpkS3D3A', input={'query': \"SELECT name, species, breed FROM pets WHERE owner_id = 'pers-0352'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT name, species, breed FROM pets WHERE owner_id = 'pers-0352'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "name": "Robert",
+                "species": "Fish",
+                "breed": "Purebred"
+              },
+              {
+                "name": "Nathaniel",
+                "species": "Rabbit",
+                "breed": "Mixed"
+              },
+              {
+                "name": "Steven",
+                "species": "Dog",
+                "breed": "Mixed"
+              }
+            ],
+            "row_count": 3,
+            "execution_time_ms": 1.8489360809326172,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_015bitJzds2xp8dT7ZvMJo4B', input={'query': \"SELECT DISTINCT diagnosis FROM medical_records WHERE diagnosis != 'None' AND diagnosis IS NOT NULL ORDER BY diagnosis\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT DISTINCT diagnosis FROM medical_records WHERE diagnosis != 'None' AND diagnosis IS NOT NULL ORDER BY diagnosis"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "diagnosis": "Allergy"
+              },
+              {
+                "diagnosis": "Asthma"
+              },
+              {
+                "diagnosis": "Diabetes"
+              },
+              {
+                "diagnosis": "Hypertension"
+              }
+            ],
+            "row_count": 4,
+            "execution_time_ms": 0.9491443634033203,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01K68f9TzqSTDrk8kHfRaEP9', input={'query': \"SELECT COUNT(*) FROM medical_records WHERE diagnosis = 'Asthma'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM medical_records WHERE diagnosis = 'Asthma'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 59,
+            "row_count": 1,
+            "execution_time_ms": 1.1761188507080078,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_011RBczdwNXtF2EbtonQRMnd', input={'query': \"SELECT COUNT(*) FROM medical_records WHERE diagnosis = 'Diabetes'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM medical_records WHERE diagnosis = 'Diabetes'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 51,
+            "row_count": 1,
+            "execution_time_ms": 0.331878662109375,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01JDrhJENrHFeHmvrh2gc1vU', input={'query': \"SELECT username FROM internet_accounts WHERE username = 'shadowhunter99' LIMIT 1\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username FROM internet_accounts WHERE username = 'shadowhunter99' LIMIT 1"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [],
+            "row_count": 0,
+            "execution_time_ms": 1.0747909545898438,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01CzgQ7G6VvkHYK55Kq3yoRf', input={'query': \"SELECT username, owner_id FROM internet_accounts WHERE username LIKE '%shadow%' OR username LIKE '%hunter%' OR username LIKE '%ninja%'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username, owner_id FROM internet_accounts WHERE username LIKE '%shadow%' OR username LIKE '%hunter%' OR username LIKE '%ninja%'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "username": "christianhunter",
+                "owner_id": "pers-0131"
+              },
+              {
+                "username": "dhunter",
+                "owner_id": "pers-0236"
+              },
+              {
+                "username": "hunterphillip",
+                "owner_id": "pers-0349"
+              }
+            ],
+            "row_count": 3,
+            "execution_time_ms": 0.6070137023925781,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_019Xanci6fKjQTduVqp1Anw8', input={'query': \"SELECT ia.username, ia.owner_id, p.full_name FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id WHERE ia.username = 'christianhunter'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT ia.username, ia.owner_id, p.full_name FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id WHERE ia.username = 'christianhunter'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "username": "christianhunter",
+                "owner_id": "pers-0131",
+                "full_name": "Mario Roberts"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 1.3461112976074219,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01XQpFXT9rowcMLKbxWMhLoy', input={'query': \"SELECT COUNT(*) FROM bank_accounts WHERE owner_id = 'pers-0131'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM bank_accounts WHERE owner_id = 'pers-0131'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 6,
+            "row_count": 1,
+            "execution_time_ms": 0.9720325469970703,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_013oUE8eS5yY7ZKi3opGLz6P', input={'query': \"SELECT COUNT(*) FROM bank_accounts WHERE owner_id = 'pers-0236'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM bank_accounts WHERE owner_id = 'pers-0236'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 5,
+            "row_count": 1,
+            "execution_time_ms": 0.7879734039306641,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_016T9VrSx2BGZAQxePBz1Nq4', input={'query': \"SELECT COUNT(*) FROM bank_accounts WHERE owner_id = 'pers-0349'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM bank_accounts WHERE owner_id = 'pers-0349'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 4,
+            "row_count": 1,
+            "execution_time_ms": 0.7069110870361328,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01UvgeXtJXEvSZcf3DgBwrmn', input={'query': \"SELECT company, position FROM employments WHERE owner_id = 'pers-0131'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT company, position FROM employments WHERE owner_id = 'pers-0131'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "company": "Bennett, Beck and Johnson",
+                "position": "Information officer"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 2.4161338806152344,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01C5s3CFyf9siGCux1uLcfoH', input={'query': \"SELECT ia.username, ia.owner_id, p.full_name, e.company FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id LEFT JOIN employments e ON ia.owner_id = e.owner_id WHERE ia.username LIKE '%hunter%'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT ia.username, ia.owner_id, p.full_name, e.company FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id LEFT JOIN employments e ON ia.owner_id = e.owner_id WHERE ia.username LIKE '%hunter%'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "username": "christianhunter",
+                "owner_id": "pers-0131",
+                "full_name": "Mario Roberts",
+                "company": "Bennett, Beck and Johnson"
+              },
+              {
+                "username": "dhunter",
+                "owner_id": "pers-0236",
+                "full_name": "Gina Taylor",
+                "company": "Hutchinson, Boone and Vargas"
+              },
+              {
+                "username": "dhunter",
+                "owner_id": "pers-0236",
+                "full_name": "Gina Taylor",
+                "company": "Lee-Gray"
+              },
+              {
+                "username": "hunterphillip",
+                "owner_id": "pers-0349",
+                "full_name": "Lori Leonard",
+                "company": "Smith, Greer and Ramsey"
+              },
+              {
+                "username": "hunterphillip",
+                "owner_id": "pers-0349",
+                "full_name": "Lori Leonard",
+                "company": "Jones Inc"
+              }
+            ],
+            "row_count": 5,
+            "execution_time_ms": 2.2318363189697266,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01VZyzu7BMCcDKCtgk6MZhF8', input={'query': \"SELECT username FROM internet_accounts WHERE username = 'darkknight88' LIMIT 1\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username FROM internet_accounts WHERE username = 'darkknight88' LIMIT 1"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [],
+            "row_count": 0,
+            "execution_time_ms": 0.8950233459472656,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_017MMacAjTbTdkJDamNvWXGz', input={'query': \"SELECT username, owner_id FROM internet_accounts WHERE username LIKE '%dark%' OR username LIKE '%knight%' OR username LIKE '%dragon%'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT username, owner_id FROM internet_accounts WHERE username LIKE '%dark%' OR username LIKE '%knight%' OR username LIKE '%dragon%'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "username": "fknight",
+                "owner_id": "pers-0113"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 1.4967918395996094,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Xgi82Cq1KgME5uSpi78cpj', input={'query': \"SELECT ia.username, ia.owner_id, p.full_name FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id WHERE ia.username = 'fknight'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT ia.username, ia.owner_id, p.full_name FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id WHERE ia.username = 'fknight'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": [
+              {
+                "username": "fknight",
+                "owner_id": "pers-0113",
+                "full_name": "Laura Saunders"
+              }
+            ],
+            "row_count": 1,
+            "execution_time_ms": 1.2259483337402344,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01NtbKycMEBzKnoK4FU1vPeV', input={'query': \"SELECT COUNT(*) FROM credit_cards WHERE owner_id = 'pers-0113'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM credit_cards WHERE owner_id = 'pers-0113'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 5,
+            "row_count": 1,
+            "execution_time_ms": 0.6501674652099609,
+            "error": null
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_01Mt22rW9yXUtbbhPg5t15tM', input={'query': \"SELECT COUNT(*) FROM pets WHERE owner_id = 'pers-0113'\"}, name='execute_sql', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "execute_sql",
+          "input": {
+            "query": "SELECT COUNT(*) FROM pets WHERE owner_id = 'pers-0113'"
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "execute_sql",
+          "result": {
+            "success": true,
+            "result": 3,
+            "row_count": 1,
+            "execution_time_ms": 0.843048095703125,
+            "error": null
+          }
+        },
+        {
+          "role": "user",
+          "content": "You've explored enough! You must now register a question immediately. Pick your best question idea and register it NOW using register_question."
+        },
+        {
+          "role": "assistant",
+          "content": [
+            "ToolUseBlock(id='toolu_0147LJTmCrayWUH4rwwZVRiX', input={'question': \"The person with username 'fknight' has some credit cards. Among all people who have exactly the same number of credit cards as this person, who owns the vehicle with license plate '999-KUZJ'?\", 'sql_queries': [{'description': \"Find who has username 'fknight' and count their credit cards\", 'query': \"SELECT ia.owner_id, p.full_name, COUNT(cc.card_id) as card_count FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id LEFT JOIN credit_cards cc ON ia.owner_id = cc.owner_id WHERE ia.username = 'fknight' GROUP BY ia.owner_id, p.full_name\"}, {'description': 'Find all people who have exactly 5 credit cards (same as fknight user)', 'query': 'SELECT p.person_id, p.full_name, COUNT(cc.card_id) as card_count FROM people p LEFT JOIN credit_cards cc ON p.person_id = cc.owner_id GROUP BY p.person_id, p.full_name HAVING COUNT(cc.card_id) = 5'}, {'description': \"Find who owns the vehicle with license plate '999-KUZJ'\", 'query': \"SELECT v.owner_id, p.full_name FROM vehicles v JOIN people p ON v.owner_id = p.person_id WHERE v.license_plate = '999-KUZJ'\"}, {'description': \"Verify that the owner of license plate '999-KUZJ' has exactly 5 credit cards\", 'query': \"SELECT p.full_name, COUNT(cc.card_id) as card_count FROM vehicles v JOIN people p ON v.owner_id = p.person_id LEFT JOIN credit_cards cc ON v.owner_id = cc.owner_id WHERE v.license_plate = '999-KUZJ' GROUP BY p.full_name\"}], 'answer': \"The person with username 'fknight' is Laura Saunders, who has 5 credit cards. Among all people in the database who have exactly 5 credit cards, Thomas Smith is the one who owns the vehicle with license plate '999-KUZJ'. This creates a specific connection between the unique username identifier and the unique license plate through the shared attribute of having exactly 5 credit cards.\"}, name='register_question', type='tool_use')"
+          ]
+        },
+        {
+          "role": "tool_call",
+          "tool": "register_question",
+          "input": {
+            "question": "The person with username 'fknight' has some credit cards. Among all people who have exactly the same number of credit cards as this person, who owns the vehicle with license plate '999-KUZJ'?",
+            "sql_queries": [
+              {
+                "description": "Find who has username 'fknight' and count their credit cards",
+                "query": "SELECT ia.owner_id, p.full_name, COUNT(cc.card_id) as card_count FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id LEFT JOIN credit_cards cc ON ia.owner_id = cc.owner_id WHERE ia.username = 'fknight' GROUP BY ia.owner_id, p.full_name"
+              },
+              {
+                "description": "Find all people who have exactly 5 credit cards (same as fknight user)",
+                "query": "SELECT p.person_id, p.full_name, COUNT(cc.card_id) as card_count FROM people p LEFT JOIN credit_cards cc ON p.person_id = cc.owner_id GROUP BY p.person_id, p.full_name HAVING COUNT(cc.card_id) = 5"
+              },
+              {
+                "description": "Find who owns the vehicle with license plate '999-KUZJ'",
+                "query": "SELECT v.owner_id, p.full_name FROM vehicles v JOIN people p ON v.owner_id = p.person_id WHERE v.license_plate = '999-KUZJ'"
+              },
+              {
+                "description": "Verify that the owner of license plate '999-KUZJ' has exactly 5 credit cards",
+                "query": "SELECT p.full_name, COUNT(cc.card_id) as card_count FROM vehicles v JOIN people p ON v.owner_id = p.person_id LEFT JOIN credit_cards cc ON v.owner_id = cc.owner_id WHERE v.license_plate = '999-KUZJ' GROUP BY p.full_name"
+              }
+            ],
+            "answer": "The person with username 'fknight' is Laura Saunders, who has 5 credit cards. Among all people in the database who have exactly 5 credit cards, Thomas Smith is the one who owns the vehicle with license plate '999-KUZJ'. This creates a specific connection between the unique username identifier and the unique license plate through the shared attribute of having exactly 5 credit cards."
+          }
+        },
+        {
+          "role": "tool_result",
+          "tool": "register_question",
+          "result": {
+            "success": true,
+            "message": "Question registered successfully. Answer: The person with username 'fknight' is Laura Saunders, who has 5 credit cards. Among all people in the database who have exactly 5 credit cards, Thomas Smith is the one who owns the vehicle with license plate '999-KUZJ'. This creates a specific connection between the unique username identifier and the unique license plate through the shared attribute of having exactly 5 credit cards.",
+            "answer": "The person with username 'fknight' is Laura Saunders, who has 5 credit cards. Among all people in the database who have exactly 5 credit cards, Thomas Smith is the one who owns the vehicle with license plate '999-KUZJ'. This creates a specific connection between the unique username identifier and the unique license plate through the shared attribute of having exactly 5 credit cards.",
+            "query_results": [
+              {
+                "description": "Find who has username 'fknight' and count their credit cards",
+                "query": "SELECT ia.owner_id, p.full_name, COUNT(cc.card_id) as card_count FROM internet_accounts ia JOIN people p ON ia.owner_id = p.person_id LEFT JOIN credit_cards cc ON ia.owner_id = cc.owner_id WHERE ia.username = 'fknight' GROUP BY ia.owner_id, p.full_name",
+                "result": [
+                  {
+                    "owner_id": "pers-0113",
+                    "full_name": "Laura Saunders",
+                    "card_count": 5
+                  }
+                ]
+              },
+              {
+                "description": "Find all people who have exactly 5 credit cards (same as fknight user)",
+                "query": "SELECT p.person_id, p.full_name, COUNT(cc.card_id) as card_count FROM people p LEFT JOIN credit_cards cc ON p.person_id = cc.owner_id GROUP BY p.person_id, p.full_name HAVING COUNT(cc.card_id) = 5",
+                "result": [
+                  {
+                    "person_id": "pers-0015",
+                    "full_name": "Tracy Sloan",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0027",
+                    "full_name": "Olivia Vasquez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0035",
+                    "full_name": "Richard Velasquez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0038",
+                    "full_name": "Latoya Leonard",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0043",
+                    "full_name": "Michael Chavez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0046",
+                    "full_name": "Emily Santiago",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0052",
+                    "full_name": "Johnny Griffin",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0062",
+                    "full_name": "Ebony Moore",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0067",
+                    "full_name": "Megan Sutton",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0072",
+                    "full_name": "Cole Evans",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0077",
+                    "full_name": "Sherry Burton",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0080",
+                    "full_name": "David Black",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0082",
+                    "full_name": "Paul Bender",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0084",
+                    "full_name": "Christine Martinez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0085",
+                    "full_name": "Geoffrey Cox",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0089",
+                    "full_name": "Nicole Harrell",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0092",
+                    "full_name": "Amy Marsh",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0095",
+                    "full_name": "Roy Choi",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0101",
+                    "full_name": "Julie Rodriguez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0108",
+                    "full_name": "Tammy Roberts",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0112",
+                    "full_name": "Ashley Mathews",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0113",
+                    "full_name": "Laura Saunders",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0119",
+                    "full_name": "Clinton Espinoza",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0124",
+                    "full_name": "Brian Smith",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0125",
+                    "full_name": "Kirk Moore",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0128",
+                    "full_name": "Amy Wood",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0130",
+                    "full_name": "Elizabeth Allen",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0131",
+                    "full_name": "Mario Roberts",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0133",
+                    "full_name": "Mark Barber",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0138",
+                    "full_name": "Jennifer Peters",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0144",
+                    "full_name": "Alan Chandler",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0160",
+                    "full_name": "Grant Martinez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0172",
+                    "full_name": "John Cooper",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0178",
+                    "full_name": "Jessica Conner",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0186",
+                    "full_name": "Riley Rojas",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0194",
+                    "full_name": "Kayla Roberts",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0200",
+                    "full_name": "Gary Flynn",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0202",
+                    "full_name": "James Hammond",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0204",
+                    "full_name": "Michael Clayton",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0213",
+                    "full_name": "Ashley Myers",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0217",
+                    "full_name": "John Berry",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0234",
+                    "full_name": "Eugene Gordon",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0242",
+                    "full_name": "Bryan Bradley",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0243",
+                    "full_name": "Melanie Johnson",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0253",
+                    "full_name": "Ian Allen",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0264",
+                    "full_name": "Richard Wells",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0265",
+                    "full_name": "Jon Snyder",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0271",
+                    "full_name": "Julie Guzman",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0272",
+                    "full_name": "Lisa Williams",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0279",
+                    "full_name": "Edward Morrow",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0281",
+                    "full_name": "Amber Salazar",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0282",
+                    "full_name": "Bonnie Robertson",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0287",
+                    "full_name": "Mitchell Ross",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0292",
+                    "full_name": "Mary Morales",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0299",
+                    "full_name": "Sherri Wilson",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0300",
+                    "full_name": "Julie Terry",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0305",
+                    "full_name": "Jimmy Hernandez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0322",
+                    "full_name": "Amber Mcintyre",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0328",
+                    "full_name": "Alicia Rich",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0335",
+                    "full_name": "Brenda Rhodes",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0337",
+                    "full_name": "Katherine Drake",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0351",
+                    "full_name": "Michael Schaefer",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0352",
+                    "full_name": "Thomas Smith",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0353",
+                    "full_name": "Jeffrey Smith",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0361",
+                    "full_name": "Robert White",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0375",
+                    "full_name": "Carolyn Zhang",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0377",
+                    "full_name": "Brooke Jackson",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0381",
+                    "full_name": "Brian Larson",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0387",
+                    "full_name": "Julie Saunders",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0389",
+                    "full_name": "Ashley Lopez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0395",
+                    "full_name": "Dawn Espinoza",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0396",
+                    "full_name": "Alexis Beltran",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0408",
+                    "full_name": "Joshua Rosario",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0413",
+                    "full_name": "Paul Miller",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0414",
+                    "full_name": "Mark White",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0418",
+                    "full_name": "David Brown",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0422",
+                    "full_name": "Stephen Rodriguez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0429",
+                    "full_name": "John Jenkins",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0433",
+                    "full_name": "Andrew Hernandez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0439",
+                    "full_name": "Jeffrey Barajas",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0441",
+                    "full_name": "Kevin Williams",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0450",
+                    "full_name": "Justin Martin",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0452",
+                    "full_name": "Jacqueline Hicks",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0457",
+                    "full_name": "Maria Huffman",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0468",
+                    "full_name": "Sue Robinson",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0477",
+                    "full_name": "Tamara Bridges",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0479",
+                    "full_name": "Patrick Guzman",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0485",
+                    "full_name": "Krystal Brady",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0486",
+                    "full_name": "Joan Ramirez",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0492",
+                    "full_name": "Paul Lucas",
+                    "card_count": 5
+                  },
+                  {
+                    "person_id": "pers-0498",
+                    "full_name": "Jon Zimmerman",
+                    "card_count": 5
+                  }
+                ]
+              },
+              {
+                "description": "Find who owns the vehicle with license plate '999-KUZJ'",
+                "query": "SELECT v.owner_id, p.full_name FROM vehicles v JOIN people p ON v.owner_id = p.person_id WHERE v.license_plate = '999-KUZJ'",
+                "result": [
+                  {
+                    "owner_id": "pers-0352",
+                    "full_name": "Thomas Smith"
+                  }
+                ]
+              },
+              {
+                "description": "Verify that the owner of license plate '999-KUZJ' has exactly 5 credit cards",
+                "query": "SELECT p.full_name, COUNT(cc.card_id) as card_count FROM vehicles v JOIN people p ON v.owner_id = p.person_id LEFT JOIN credit_cards cc ON v.owner_id = cc.owner_id WHERE v.license_plate = '999-KUZJ' GROUP BY p.full_name",
+                "result": [
+                  {
+                    "full_name": "Thomas Smith",
+                    "card_count": 5
+                  }
+                ]
+              }
+            ],
+            "total_questions": 1
+          }
+        }
+      ]
+    }
+  ]
+}

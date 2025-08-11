@@ -13,5 +13,8 @@ CLAUDE.md
 
 .DS_Store
 
-# Generated conversation files for LoCoMo benchmark
+
 leaderboard/locomo/data*
+
+.venv
+

@@ -1,7 +1,7 @@
-letta
 rich
-letta_client
+letta-client
 datasets
 ruff
 faker
 openai
+jinja2

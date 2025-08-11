@@ -44,6 +44,7 @@ from openai import AsyncOpenAI
 from tqdm import tqdm
 
 # Import from refactored modules
+from leaderboard.letta_file_bench.config import CONFIG
 from leaderboard.letta_file_bench.models.question_models import QuestionAnswer
 from leaderboard.letta_file_bench.models.entities import (
     Person, Address, BankAccount, Employment, CreditCard, Vehicle, Pet,
@@ -62,9 +63,6 @@ def _ensure_unique_name(name_generator, name_type: str, max_attempts: int = 100)
 def _reset_name_tracking():
     reset_uniqueness_tracking()
     reset_id_counters()
-
-
-
 
 def gen_population(args):
     # Reset name tracking for fresh generation
@@ -204,14 +202,28 @@ def generate_questions_with_llm(
     num_questions: int = 10,
     model: str = "gpt-4o",
     api_key: Optional[str] = None,
-    temperature: float = 0.8,
-    max_concurrent: int = 5,
-    single_hop_pct: float = 0.4,
-    multi_hop_pct: float = 0.2,
-    comparison_pct: float = 0.4,
-    seed: int = 42
+    temperature: float = None,
+    max_concurrent: int = None,
+    single_hop_pct: float = None,
+    multi_hop_pct: float = None,
+    comparison_pct: float = None,
+    seed: int = None
 ) -> List[Dict[str, Any]]:
     """Use an LLM with structured outputs to generate challenging questions by randomly sampling from all people."""
+    
+    # Apply config defaults
+    if temperature is None:
+        temperature = CONFIG.generation.temperature
+    if max_concurrent is None:
+        max_concurrent = CONFIG.generation.max_concurrent
+    if single_hop_pct is None:
+        single_hop_pct = CONFIG.generation.question_types.single_hop_pct
+    if multi_hop_pct is None:
+        multi_hop_pct = CONFIG.generation.question_types.multi_hop_pct
+    if comparison_pct is None:
+        comparison_pct = CONFIG.generation.question_types.comparison_pct
+    if seed is None:
+        seed = CONFIG.generation.seed
     
     if not api_key:
         import os
@@ -324,30 +336,30 @@ def export_llm_questions(questions: List[Dict[str, Any]], out_dir: Path, filenam
 
 def parse_args():
     ap = argparse.ArgumentParser("Synthetic corpus generator")
-    ap.add_argument("--num-people", type=int, default=100)
-    ap.add_argument("--max-addresses", type=int, default=2)
-    ap.add_argument("--max-accounts", type=int, default=3)
-    ap.add_argument("--max-employments", type=int, default=1)
-    ap.add_argument("--max-credit-cards", type=int, default=2)
-    ap.add_argument("--max-vehicles", type=int, default=1)
-    ap.add_argument("--max-pets", type=int, default=1)
-    ap.add_argument("--max-net-accounts", type=int, default=2)
-    ap.add_argument("--max-insurances", type=int, default=1)
-    ap.add_argument("--max-medical-records", type=int, default=1)
+    ap.add_argument("--num-people", type=int, default=CONFIG.data_generation.num_people)
+    ap.add_argument("--max-addresses", type=int, default=CONFIG.data_generation.max_per_person.addresses)
+    ap.add_argument("--max-accounts", type=int, default=CONFIG.data_generation.max_per_person.accounts)
+    ap.add_argument("--max-employments", type=int, default=CONFIG.data_generation.max_per_person.employments)
+    ap.add_argument("--max-credit-cards", type=int, default=CONFIG.data_generation.max_per_person.credit_cards)
+    ap.add_argument("--max-vehicles", type=int, default=CONFIG.data_generation.max_per_person.vehicles)
+    ap.add_argument("--max-pets", type=int, default=CONFIG.data_generation.max_per_person.pets)
+    ap.add_argument("--max-net-accounts", type=int, default=CONFIG.data_generation.max_per_person.net_accounts)
+    ap.add_argument("--max-insurances", type=int, default=CONFIG.data_generation.max_per_person.insurances)
+    ap.add_argument("--max-medical-records", type=int, default=CONFIG.data_generation.max_per_person.medical_records)
     ap.add_argument("--locales", nargs="*", default=["en_US"], help="Faker locales")
-    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--seed", type=int, default=CONFIG.data_generation.seed)
     ap.add_argument("--output-dir", type=Path, default=Path(__file__).parent / "data")
     
     # LLM question generation options
     ap.add_argument("--generate-llm-questions", action="store_true", help="Generate questions using LLM from existing golden_answers.json")
     ap.add_argument("--llm-model", type=str, default="gpt-4o", help="LLM model to use for question generation")
     ap.add_argument("--num-questions", type=int, default=10, help="Number of questions to generate")
-    ap.add_argument("--llm-seed", type=int, default=42, help="Seed for random selection")
-    ap.add_argument("--temperature", type=float, default=0.8, help="LLM temperature for diversity vs accuracy balance")
-    ap.add_argument("--max-concurrent", type=int, default=5, help="Maximum concurrent requests for parallel generation")
-    ap.add_argument("--single-hop-pct", type=float, default=0.4, help="Percentage of single-hop questions (0.0-1.0)")
-    ap.add_argument("--multi-hop-pct", type=float, default=0.2, help="Percentage of multi-hop questions (0.0-1.0)")
-    ap.add_argument("--comparison-pct", type=float, default=0.4, help="Percentage of comparison questions (0.0-1.0)")
+    ap.add_argument("--llm-seed", type=int, default=CONFIG.generation.seed, help="Seed for random selection")
+    ap.add_argument("--temperature", type=float, default=CONFIG.generation.temperature, help="LLM temperature for diversity vs accuracy balance")
+    ap.add_argument("--max-concurrent", type=int, default=CONFIG.generation.max_concurrent, help="Maximum concurrent requests for parallel generation")
+    ap.add_argument("--single-hop-pct", type=float, default=CONFIG.generation.question_types.single_hop_pct, help="Percentage of single-hop questions (0.0-1.0)")
+    ap.add_argument("--multi-hop-pct", type=float, default=CONFIG.generation.question_types.multi_hop_pct, help="Percentage of multi-hop questions (0.0-1.0)")
+    ap.add_argument("--comparison-pct", type=float, default=CONFIG.generation.question_types.comparison_pct, help="Percentage of comparison questions (0.0-1.0)")
     
     return ap.parse_args()
 

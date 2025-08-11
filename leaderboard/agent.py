@@ -1,5 +1,5 @@
 from typing import Any
-from letta_client import AsyncLetta, LlmConfig, EmbeddingConfig
+from letta_client import AsyncLetta
 
 
 async def create_base_agent(

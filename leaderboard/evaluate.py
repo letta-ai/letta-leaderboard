@@ -4,6 +4,7 @@ import json
 import os
 import datetime
 import asyncio
+import traceback
 from typing import Callable, Any
 from tqdm import tqdm
 from rich import print
@@ -273,6 +274,13 @@ async def main():
         action="store_true",
         help="Debug mode",
     )
+
+    parser.add_argument(
+        "--questions_file",
+        type=str,
+        default=None,
+        help="Path to custom questions JSONL file for file benchmarks",
+    )
     args = parser.parse_args()
 
     client_settings = {"base_url": args.letta_server}
@@ -281,7 +289,15 @@ async def main():
     bench_mod = importlib.import_module(
         f".{args.benchmark}.{args.benchmark}_benchmark", "leaderboard"
     )
-    benchmark: Benchmark = getattr(bench_mod, args.benchmark_variable)
+    
+    # Check if this is a file benchmark
+    if args.benchmark == "letta_file_bench":
+        if not args.questions_file:
+            raise ValueError("--questions_file is required for letta_file_bench benchmark")
+        # Use the factory function
+        benchmark: Benchmark = bench_mod.create_file_open_benchmark(questions_file=args.questions_file)
+    else:
+        benchmark: Benchmark = getattr(bench_mod, args.benchmark_variable)
 
     model_config_path = f"leaderboard/llm_model_configs/{args.model}.json"
     with open(model_config_path) as f:
@@ -319,6 +335,13 @@ async def main():
     benchmark.truncate_dataset(args.dataset_size)
 
     await benchmark.setup_tools(client)
+    # Setup sources if the benchmark supports it (e.g., LettaFileBenchmark)
+    if hasattr(benchmark, 'setup_sources'):
+        await benchmark.setup_sources(client, embedding_config)
+
+    # Setup required tools if the benchmark supports it (e.g., LettaFileBenchmark)
+    if hasattr(benchmark, 'setup_required_tools'):
+        await benchmark.setup_required_tools(client)
 
     for i in range(args.repeat_from, args.repeat):
         print(
