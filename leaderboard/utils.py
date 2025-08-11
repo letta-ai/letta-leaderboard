@@ -474,8 +474,8 @@ if __name__ == "__main__":
         arg.add_argument("--port", type=int, default=8283)
         arg.add_argument("--delete_all_agents", action="store_true")
         arg.add_argument("--search_agent_name_by_id", type=str)
-        arg.add_argument("--get_results_for_model", type=str)
-        arg.add_argument("--get_benchmark_results_for_model", type=str)
+        arg.add_argument("--get_results_for_model", type=str, help="Get all results for a model. Example: --get_results_for_model openai-gpt-4.1-mini --result_dir results/")
+        arg.add_argument("--get_benchmark_results_for_model", type=str, help="Get a specific benchmark results for a model. Example: --get_benchmark_results_for_model openai-gpt-4.1-mini --result_dir results/letta_bench_core_memory_write_benchmark_100")
         arg.add_argument("--result_dir", type=str)
         arg.add_argument("--benchmark_name", type=str)
 
