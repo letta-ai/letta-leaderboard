@@ -236,6 +236,8 @@ class CoreMemoryWriteBenchmark(LettaBenchmark):
         # Ensure agent_config contains required keys
         assert "llm_config" in agent_config, "agent_config must contain 'llm_config'"
         assert "embedding_config" in agent_config, "agent_config must contain 'embedding_config'"
+
+        agent_config["include_base_tool_rules"] = True 
         
         names = [n for n in datum.name if n.lower() in datum.message.lower()]
         persona = []
