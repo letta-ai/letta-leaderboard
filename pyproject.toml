@@ -1,0 +1,15 @@
+[project]
+name = "letta-leaderboard"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "datasets>=4.0.0",
+    "faker>=37.6.0",
+    "jinja2>=3.1.6",
+    "letta-client>=0.1.318",
+    "openai>=1.107.0",
+    "rich>=14.1.0",
+    "ruff>=0.12.12",
+]
