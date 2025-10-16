@@ -1,4 +1,4 @@
-# Letta Leaderboard
+# Letta Leaderboard [Archived]
 
 ## Repo Archived
 The [Letta Leaderboard](https://docs.letta.com/leaderboard) is now integrated with [Letta-Evals](https://github.com/letta-ai/letta-evals)! This repository is no longer maintained.
