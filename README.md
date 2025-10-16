@@ -1,5 +1,8 @@
 # Letta Leaderboard
 
+## Repo Archived
+The [Letta Leaderboard](https://docs.letta.com/leaderboard) has now integrated with [Letta-Evals](https://github.com/letta-ai/letta-evals)! Thhis repository is no longer maintained.
+
 The [Letta Leaderboard](https://docs.letta.com/leaderboard) helps users select which language models work well in the Letta framework by reporting the performance of popular models on a series of tasks. The tasks are designed to test the core memory management functionality in Letta.  Models that are strong at function calling and aware of their limitations typically work well in Letta.
 
 To view a table of the most recent results, visit [our docs page](https://docs.letta.com/leaderboard).
